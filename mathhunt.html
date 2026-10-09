@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Neon Math - Clasa I (Random Color)</title>
+    <style>
+        body {
+            margin: 0;
+            background: #020205;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #ui-layer {
+            position: absolute;
+            top: 20px;
+            display: flex;
+            gap: 30px;
+            z-index: 10;
+        }
+        .stat-box {
+            padding: 8px 15px;
+            border: 2px solid #0ff;
+            box-shadow: 0 0 10px #0ff;
+            border-radius: 8px;
+            background: rgba(0, 255, 255, 0.05);
+            font-weight: bold;
+            font-size: 18px;
+        }
+        #target-display {
+            position: absolute;
+            bottom: 40px;
+            padding: 15px 35px;
+            border: 3px solid #f0f;
+            box-shadow: 0 0 25px #f0f;
+            border-radius: 50px;
+            font-size: 35px;
+            background: rgba(255, 0, 255, 0.1);
+            text-shadow: 0 0 10px #f0f;
+            font-weight: bold;
+        }
+        canvas { cursor: crosshair; }
+    </style>
+<meta name="joc-inapoi" content="clasa0.html">
+<link rel="stylesheet" href="joc.css">
+</head>
+<body>
+
+<div id="ui-layer">
+    <div class="stat-box" id="score-box" style="color: #0ff;">Scor: 0</div>
+    <div class="stat-box" id="life-box" style="border-color: #f00; box-shadow: 0 0 10px #f00; color: #f00;">Vieți: 3</div>
+</div>
+
+<div id="target-display">Caută: ?</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score-box');
+    const lifeEl = document.getElementById('life-box');
+    const targetEl = document.getElementById('target-display');
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let score = 0;
+    let lives = 3;
+    let currentTarget = 0;
+    let targets = [];
+    let particles = [];
+    const neonColors = ['#0ff', '#0f0', '#ff0', '#f0f', '#00f', '#fff'];
+
+    class Particle {
+        constructor(x, y, color) {
+            this.x = x; this.y = y;
+            this.size = Math.random() * 3 + 1;
+            this.speedX = (Math.random() - 0.5) * 8;
+            this.speedY = (Math.random() - 0.5) * 8;
+            this.color = color;
+            this.alpha = 1;
+        }
+        update() { this.x += this.speedX; this.y += this.speedY; this.alpha -= 0.03; }
+        draw() {
+            ctx.save(); ctx.globalAlpha = this.alpha;
+            ctx.fillStyle = this.color;
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    class MathTarget {
+        constructor(text, value, isCorrect) {
+            this.x = Math.random() * (canvas.width - 160) + 80;
+            this.y = -60;
+            this.text = text;
+            this.value = value;
+            this.isCorrect = isCorrect;
+            this.speed = 0.8;
+            this.radius = 65;
+            // Culoare aleatorie pentru orice balon, fie el corect sau gresit
+            this.color = neonColors[Math.floor(Math.random() * neonColors.length)];
+        }
+        update() { this.y += this.speed; }
+        draw() {
+            ctx.save();
+            ctx.shadowBlur = 15; ctx.shadowColor = this.color;
+            ctx.strokeStyle = this.color; ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke();
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 28px Arial'; ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle'; ctx.fillText(this.text, this.x, this.y);
+            ctx.restore();
+        }
+    }
+
+    function generateRound() {
+        currentTarget = Math.floor(Math.random() * 10) + 1;
+        targetEl.innerText = `Caută: ${currentTarget}`;
+        targets = [];
+
+        // 1 corect
+        let correctText;
+        if(Math.random() > 0.5 || currentTarget === 1) {
+            let a = Math.floor(Math.random() * (currentTarget + 1));
+            correctText = `${a} + ${currentTarget - a}`;
+        } else {
+            let extra = Math.floor(Math.random() * 3) + 1;
+            correctText = `${currentTarget + extra} - ${extra}`;
+        }
+        targets.push(new MathTarget(correctText, currentTarget, true));
+
+        // 2 variante greșite
+        for(let i=0; i<2; i++) {
+            let wrongVal;
+            do {
+                wrongVal = Math.floor(Math.random() * 10) + 1;
+            } while (wrongVal === currentTarget);
+            
+            targets.push(new MathTarget(`${wrongVal} + 0`, wrongVal, false));
+        }
+    }
+
+    function createExplosion(x, y, color) {
+        for(let i=0; i<15; i++) particles.push(new Particle(x, y, color));
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+
+        let hitIdx = -1;
+        targets.forEach((t, index) => {
+            const dist = Math.hypot(mx - t.x, my - t.y);
+            if (dist < t.radius) hitIdx = index;
+        });
+
+        if(hitIdx !== -1) {
+            const t = targets[hitIdx];
+            if (t.isCorrect) {
+                createExplosion(t.x, t.y, t.color);
+                score += 10;
+                scoreEl.innerText = `Scor: ${score}`;
+                generateRound();
+            } else {
+                createExplosion(t.x, t.y, '#f00');
+                loseLife();
+                targets.splice(hitIdx, 1);
+            }
+        }
+    });
+
+    function loseLife() {
+        lives--;
+        lifeEl.innerText = `Vieți: ${lives}`;
+        if (lives <= 0) {
+            alert("Joc Terminat! Scor: " + score);
+            score = 0; lives = 3;
+            scoreEl.innerText = `Scor: 0`; lifeEl.innerText = `Vieți: 3`;
+            generateRound();
+        }
+    }
+
+    function update() {
+        ctx.fillStyle = 'rgba(2, 2, 5, 0.2)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        targets.forEach((t, i) => {
+            t.update(); t.draw();
+            if (t.y > canvas.height + t.radius) {
+                if (t.isCorrect) loseLife();
+                targets.splice(i, 1);
+                if (targets.length === 0) generateRound();
+            }
+        });
+
+        particles.forEach((p, i) => {
+            p.update(); p.draw();
+            if (p.alpha <= 0) particles.splice(i, 1);
+        });
+
+        requestAnimationFrame(update);
+    }
+
+    generateRound();
+    update();
+</script>
+<script src="joc.js"></script>
+</body>
+</html>

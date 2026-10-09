@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Exerciții cu o Necunoscută - Clasa a III-a</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        header {
+            background-color: #4682b4;
+            color: white;
+            padding: 10px 0;
+            margin-bottom: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffe4b5;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #d35400;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+        .exercise {
+            font-size: 2.2em;
+            margin: 30px 0;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        input[type="number"] {
+            font-size: 0.8em;
+            padding: 5px;
+            width: 90px;
+            border: 3px solid #4682b4;
+            border-radius: 10px;
+            text-align: center;
+            outline: none;
+        }
+        button {
+            font-size: 1.2em;
+            padding: 12px 30px;
+            background-color: #32cd32;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 4px 0 #228b22;
+        }
+        button:hover {
+            background-color: #2ecc71;
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(2px);
+            box-shadow: none;
+        }
+        .feedback {
+            font-size: 1.3em;
+            margin-top: 25px;
+            min-height: 1.5em;
+            font-weight: bold;
+        }
+        .success { color: #27ae60; animation: bounce 0.5s; }
+        .error { color: #e74c3c; animation: shake 0.4s; }
+        .score {
+            font-size: 1.1em;
+            color: #7f8c8d;
+            margin-top: 15px;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+    </style>
+<meta name="joc-inapoi" content="clasa3.html">
+<link rel="stylesheet" href="joc.css">
+</head>
+<body>
+
+    <header>
+        <h1>🌟 Jocuri Logice - Mate 🌟</h1>
+    </header>
+
+    <main>
+        <div class="container">
+            <h1>Află numărul necunoscut</h1>
+            
+            <div id="exercise" class="exercise">
+                </div>
+
+            <button onclick="checkAnswer()">Verifică Rezultatul</button>
+            
+            <div id="feedback" class="feedback"></div>
+            <div class="score">Exerciții rezolvate: <span id="score-val">0</span></div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Cercul de Jocuri Logice - Palatul Copiilor Arad</p>
+    </footer>
+
+    
+
+    <script>
+        let num1, num2, operation, correctAnswer;
+        let score = 0;
+
+        function generateExercise() {
+            const operations = ['+', '-', '*', '/'];
+            operation = operations[Math.floor(Math.random() * operations.length)];
+            
+            // Generăm numere prietenoase pentru clasa a III-a (1-10)
+            num1 = Math.floor(Math.random() * 9) + 2; // de la 2 la 10
+            num2 = Math.floor(Math.random() * 9) + 2; // de la 2 la 10
+
+            let exerciseText = '';
+            let inputElement = '<input type="number" id="answer" placeholder="?" autofocus />';
+
+            if (operation === '+') {
+                // x + num1 = suma
+                correctAnswer = num2;
+                let suma = num1 + num2;
+                exerciseText = `${inputElement} + ${num1} = ${suma}`;
+            } 
+            else if (operation === '-') {
+                // x - num1 = diferenta
+                // Ca sa nu avem numere negative, x (correctAnswer) va fi num1 + num2
+                correctAnswer = num1 + num2;
+                exerciseText = `${inputElement} - ${num1} = ${num2}`;
+            } 
+            else if (operation === '*') {
+                // x * num1 = produs
+                correctAnswer = num2;
+                let produs = num1 * num2;
+                exerciseText = `${inputElement} × ${num1} = ${produs}`;
+            } 
+            else if (operation === '/') {
+                // x ÷ num1 = cat
+                // Ca sa avem impartire exacta, x (correctAnswer) trebuie sa fie num1 * num2
+                correctAnswer = num1 * num2;
+                exerciseText = `${inputElement} ÷ ${num1} = ${num2}`;
+            }
+
+            document.getElementById('exercise').innerHTML = exerciseText;
+            document.getElementById('feedback').textContent = '';
+            document.getElementById('feedback').className = 'feedback';
+            
+            // Punem cursorul automat in casuta
+            document.getElementById('answer').focus();
+        }
+
+        function checkAnswer() {
+            const answerInput = document.getElementById('answer');
+            const feedbackElement = document.getElementById('feedback');
+            const userAnswer = parseInt(answerInput.value, 10);
+
+            if (isNaN(userAnswer)) {
+                feedbackElement.textContent = "Te rog, scrie un număr! 😊";
+                feedbackElement.className = 'feedback error';
+                return;
+            }
+
+            if (userAnswer === correctAnswer) {
+                feedbackElement.textContent = "Excelent! Corect! 🎉";
+                feedbackElement.className = 'feedback success';
+                score++;
+                document.getElementById('score-val').textContent = score;
+                
+                // Generăm următorul exercițiu după 1.5 secunde
+                setTimeout(generateExercise, 1500);
+            } else {
+                feedbackElement.textContent = `Ups! Mai încearcă. Răspunsul era ${correctAnswer}.`;
+                feedbackElement.className = 'feedback error';
+                
+                // Resetăm căsuța după 2 secunde și generăm altul
+                setTimeout(generateExercise, 2500);
+            }
+        }
+
+        // Permite apăsarea tastei Enter pentru verificare
+        document.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        // Inițializare la încărcarea paginii
+        window.onload = generateExercise;
+    </script>
+
+<script src="joc.js"></script>
+</body>
+</html>

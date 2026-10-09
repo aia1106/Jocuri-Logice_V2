@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Cyber Math Sniper V2</title>
+    <style>
+        body {
+            margin: 0;
+            background: #020208;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            cursor: none;
+        }
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 100;
+        }
+        .stat {
+            background: rgba(0, 255, 255, 0.05);
+            border: 2px solid #0ff;
+            padding: 15px 25px;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+        }
+        #mission {
+            position: absolute;
+            bottom: 40px;
+            width: 100%;
+            text-align: center;
+            font-size: 28px;
+            color: #f0f;
+            text-shadow: 0 0 15px #f0f;
+            font-weight: bold;
+            pointer-events: none;
+        }
+        canvas { display: block; }
+    </style>
+<meta name="joc-inapoi" content="clasa1.html">
+<link rel="stylesheet" href="joc.css">
+</head>
+<body>
+
+<div id="hud">
+    <div class="stat" style="color: #0ff;">SCOR: <span id="score">0</span></div>
+    <div class="stat" style="border-color: #f00; color: #f00;">HP: <span id="hp">100%</span></div>
+</div>
+<div id="mission">ELIMINĂ REZULTATUL: <span id="target-num">?</span></div>
+
+<canvas id="gameCanvas"></canvas>
+
+
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+    const hpEl = document.getElementById('hp');
+    const targetNumEl = document.getElementById('target-num');
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let score = 0;
+    let hp = 100;
+    let currentTargetNum = 0;
+    let targets = [];
+    let mouse = { x: 0, y: 0 };
+    let flash = 0;
+    const colors = ['#0ff', '#f0f', '#0f0', '#ff0'];
+
+    class Target {
+        constructor(isCorrectForce = false) {
+            this.radius = 60;
+            this.x = Math.random() * (canvas.width - 150) + 75;
+            this.y = Math.random() * (canvas.height - 300) + 150;
+            this.timer = 6000; // 6 secunde - TIMP MĂRIT
+            this.maxTimer = 6000;
+            this.isCorrect = isCorrectForce;
+            this.color = colors[Math.floor(Math.random() * colors.length)];
+            
+            if(this.isCorrect) {
+                let a = Math.floor(Math.random() * (currentTargetNum + 1));
+                this.text = `${a} + ${currentTargetNum - a}`;
+            } else {
+                let wrong;
+                do { wrong = Math.floor(Math.random() * 10) + 1; } while (wrong === currentTargetNum);
+                this.text = `${wrong} + 0`;
+            }
+        }
+
+        draw() {
+            ctx.save();
+            // Efect de umbră/glow
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = this.color;
+            
+            // Cercul exterior (fără cruce la mijloc)
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Bara de timp circulară (se consumă pe măsură ce trece timpul)
+            ctx.beginPath();
+            ctx.lineWidth = 2;
+            ctx.arc(this.x, this.y, this.radius + 8, 0, (Math.PI * 2) * (this.timer / this.maxTimer));
+            ctx.stroke();
+
+            // Textul exercițiului - Acum FOARTE vizibil
+            ctx.fillStyle = "#fff";
+            ctx.font = "bold 28px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.shadowBlur = 5;
+            ctx.shadowColor = "#000";
+            ctx.fillText(this.text, this.x, this.y);
+            ctx.restore();
+        }
+    }
+
+    function generateMission() {
+        currentTargetNum = Math.floor(Math.random() * 10) + 1;
+        targetNumEl.innerText = currentTargetNum;
+        targets = [];
+        // Generăm ținta corectă
+        targets.push(new Target(true));
+        // Adăugăm 2 ținte greșite
+        for(let i=0; i<2; i++) targets.push(new Target(false));
+    }
+
+    window.addEventListener('mousemove', e => { 
+        mouse.x = e.clientX; 
+        mouse.y = e.clientY; 
+    });
+
+    window.addEventListener('mousedown', () => {
+        flash = 4; // Efect de recul/lumină
+        let hitIdx = -1;
+
+        targets.forEach((t, i) => {
+            let dist = Math.hypot(mouse.x - t.x, mouse.y - t.y);
+            if(dist < t.radius) hitIdx = i;
+        });
+
+        if(hitIdx !== -1) {
+            let t = targets[hitIdx];
+            if(t.isCorrect) {
+                score += 100;
+                scoreEl.innerText = score;
+                generateMission();
+            } else {
+                hp -= 20;
+                updateHP();
+                targets.splice(hitIdx, 1);
+            }
+        }
+    });
+
+    function updateHP() {
+        hpEl.innerText = hp + "%";
+        if(hp <= 0) {
+            alert("GAME OVER! Scor: " + score);
+            hp = 100; score = 0;
+            scoreEl.innerText = "0"; hpEl.innerText = "100%";
+            generateMission();
+        }
+    }
+
+    function drawCrosshair() {
+        ctx.save();
+        ctx.strokeStyle = "#0f0";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        // Cercul vizorului
+        ctx.arc(mouse.x, mouse.y, 25, 0, Math.PI * 2);
+        // Liniile vizorului (doar la margini)
+        ctx.moveTo(mouse.x - 35, mouse.y); ctx.lineTo(mouse.x - 15, mouse.y);
+        ctx.moveTo(mouse.x + 15, mouse.y); ctx.lineTo(mouse.x + 35, mouse.y);
+        ctx.moveTo(mouse.x, mouse.y - 35); ctx.lineTo(mouse.x, mouse.y - 15);
+        ctx.moveTo(mouse.x, mouse.y + 15); ctx.lineTo(mouse.x, mouse.y + 35);
+        ctx.stroke();
+        // Punctul central
+        ctx.fillStyle = "#0f0";
+        ctx.beginPath();
+        ctx.arc(mouse.x, mouse.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function animate() {
+        // Fundal cu efect de flash
+        ctx.fillStyle = flash > 0 ? `rgba(0, 255, 255, ${flash/10})` : "#020208";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        if(flash > 0) flash--;
+
+        targets.forEach((t, i) => {
+            t.draw();
+            t.timer -= 16;
+            if(t.timer <= 0) {
+                if(t.isCorrect) { hp -= 10; updateHP(); }
+                targets.splice(i, 1);
+                if(targets.length === 0) generateMission();
+            }
+        });
+
+        drawCrosshair();
+        requestAnimationFrame(animate);
+    }
+
+    generateMission();
+    animate();
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+</script>
+<script src="joc.js"></script>
+</body>
+</html>

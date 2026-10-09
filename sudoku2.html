@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Sudoku pentru Copii 4x4 – Jocuri Logice</title>
+<link rel="icon" href="LOGO.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="stil.css">
+<meta charset="UTF-8">
+    
+    
+     <!-- pentru stilizare header/footer -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e6f7ff;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        .container {
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        h1 {
+            color: ;
+            margin-bottom: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            margin: 0 auto;
+        }
+        td {
+            width: 50px;
+            height: 50px;
+            border: 1px solid #ddd;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 2em;
+        }
+        input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            text-align: center;
+            font-size: 2em;
+            box-sizing: border-box;
+        }
+        input:focus {
+            outline: none;
+            background-color: #e6f7ff;
+        }
+        button {
+            font-size: 1em;
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #32cd32;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #228b22;
+        }
+        #message {
+            font-size: 1.2em;
+            margin-top: 20px;
+            color: #ff4500;
+        }
+    </style>
+</head>
+<body>
+<a class="skip-link" href="#continut">Sari la conținut</a>
+<header class="site-header">
+    <div class="header-top">
+        <a class="brand" href="index.html" aria-label="Jocuri Logice – pagina principală">
+            <img src="logo-palat.png" alt="" class="header-logo" width="113" height="38">
+            <span class="brand-text"><span class="site-name">Jocuri Logice</span></span>
+        </a>
+        <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="meniu"><span class="menu-icon" aria-hidden="true">☰</span><span>Meniu</span></button>
+    </div>
+    <nav aria-label="Navigare principală"><ul class="menu" id="meniu"><li><a href="index.html">Acasă</a></li><li><a href="clasa0.html">Clasa 0</a></li><li><a href="clasa1.html">Clasa I</a></li><li><a href="clasa2.html">Clasa a II-a</a></li><li><a href="clasa3.html">Clasa a III-a</a></li><li><a href="clasa4.html">Clasa a IV-a</a></li><li><a href="jocuri.html">Jocuri</a></li><li><a href="concurs.html">Concurs</a></li><li><a href="info.html">Informații</a></li><li><a href="resursedidactice.html">Resurse</a></li><li><a href="contact.html">Contact</a></li></ul></nav>
+</header>
+<main id="continut" class="legacy">
+<!-- HEADER standardizat -->
+    
+
+    <main>
+        <div class="container">
+            <h1>Sudoku pentru Copii 4x4</h1>
+            <table id="sudoku-board">
+                <tbody>
+                    <!-- Sudoku Grid generat dinamic -->
+                </tbody>
+            </table>
+            <button onclick="checkSolution()">Verifică Soluția</button>
+            <button onclick="clearBoard()">Curăță Grila</button>
+            <div id="message"></div>
+        </div>
+    </main>
+
+    <!-- FOOTER standardizat -->
+    
+
+     <!-- dacă ai funcționalități comune -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const board = document.getElementById("sudoku-board").getElementsByTagName("tbody")[0];
+            let sudokuGrid = generateInitialBoard();
+
+            function generateInitialBoard() {
+                // O grilă Sudoku 4x4 cu câteva celule precompletate
+                return [
+                    [1, 0, 0, 4],
+                    [0, 2, 0, 0],
+                    [0, 0, 3, 0],
+                    [4, 0, 0, 2]
+                ];
+            }
+
+            function renderBoard() {
+                board.innerHTML = "";
+                for (let row = 0; row < 4; row++) {
+                    const tr = document.createElement("tr");
+                    for (let col = 0; col < 4; col++) {
+                        const td = document.createElement("td");
+                        const input = document.createElement("input");
+                        input.type = "number";
+                        input.min = 1;
+                        input.max = 4;
+                        input.value = sudokuGrid[row][col] !== 0 ? sudokuGrid[row][col] : "";
+                        input.addEventListener("change", (e) => {
+                            sudokuGrid[row][col] = parseInt(e.target.value) || 0;
+                        });
+                        td.appendChild(input);
+                        tr.appendChild(td);
+                    }
+                    board.appendChild(tr);
+                }
+            }
+
+            function checkSolution() {
+                const isValid = validateSolution();
+                const message = document.getElementById("message");
+                if (isValid) {
+                    message.textContent = "Soluția este corectă!";
+                    message.style.color = "#32cd32";
+                } else {
+                    message.textContent = "Soluția este incorectă. Încearcă din nou!";
+                    message.style.color = "#ff4500";
+                }
+            }
+
+            function validateSolution() {
+                // Verifică fiecare rând
+                for (let row = 0; row < 4; row++) {
+                    const rowValues = new Set(sudokuGrid[row]);
+                    if (rowValues.size !== 4 || rowValues.has(0)) return false;
+                }
+                // Verifică fiecare coloană
+                for (let col = 0; col < 4; col++) {
+                    const colValues = new Set();
+                    for (let row = 0; row < 4; row++) {
+                        colValues.add(sudokuGrid[row][col]);
+                    }
+                    if (colValues.size !== 4 || colValues.has(0)) return false;
+                }
+                return true;
+            }
+
+            function clearBoard() {
+                sudokuGrid = generateInitialBoard();
+                renderBoard();
+                document.getElementById("message").textContent = "";
+            }
+
+            // Randează tabla la început
+            renderBoard();
+
+            window.checkSolution = checkSolution;
+            window.clearBoard = clearBoard;
+        });
+    </script>
+</main>
+<footer class="site-footer">
+    <img src="LOGO.png" alt="Sigla Cercului de Jocuri Logice" class="footer-logo" width="56" height="56" loading="lazy">
+    <p>&copy; 2025 Cercul de Jocuri Logice – Palatul Copiilor Arad</p>
+</footer>
+<script src="meniu.js"></script>
+</body>
+</html>

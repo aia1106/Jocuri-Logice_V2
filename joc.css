@@ -1,0 +1,62 @@
+/* Învelișul comun pentru paginile de joc: buton "Înapoi" + reguli tactile */
+html { -webkit-tap-highlight-color: transparent; }
+body { -webkit-touch-callout: none; }
+button, a, canvas, [onclick] { touch-action: manipulation; }
+
+.joc-inapoi {
+    position: fixed; z-index: 2147483000;
+    top: calc(8px + env(safe-area-inset-top, 0px));
+    right: calc(8px + env(safe-area-inset-right, 0px));
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    min-width: 44px; min-height: 44px; padding: 0 14px;
+    font: 800 15px/1 "Nunito", "Segoe UI", system-ui, sans-serif;
+    color: #231B33; background: rgba(255,255,255,.92);
+    border: 2px solid rgba(35,27,51,.18); border-radius: 999px;
+    box-shadow: 0 6px 16px -6px rgba(0,0,0,.45);
+    text-decoration: none; opacity: .92;
+}
+.joc-inapoi:hover, .joc-inapoi:focus-visible { opacity: 1; background: #FFB81C; outline: none; }
+@media (max-width: 480px) { .joc-inapoi .txt { display: none; } .joc-inapoi { padding: 0; width: 44px; } }
+
+/* ===== Componente comune pentru jocuri (stilul site-ului) ===== */
+:root {
+    --j-ink: #231B33; --j-plum: #4A2370; --j-plum-dark: #2A1450; --j-plum-mid: #6A3BA0;
+    --j-berry: #E23B6B; --j-sun: #FFB81C; --j-mint: #1FBF9A; --j-orange: #E8541F; --j-bg: #F8F7FB; --j-line: #E6E2EE;
+    --j-font: "Fredoka", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+    --j-font-text: "Nunito", "Segoe UI", system-ui, sans-serif;
+}
+body.jg { margin: 0; font-family: var(--j-font); -webkit-user-select: none; user-select: none; overscroll-behavior: none; }
+
+.jg-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+    padding: 24px; text-align: center; color: #fff;
+    background: rgba(42, 20, 80, .9);
+    -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
+}
+.jg-overlay[hidden] { display: none; }
+.jg-emoji { font-size: 3.6rem; line-height: 1; }
+.jg-title { margin: 0; font-weight: 700; font-size: clamp(2.2rem, 9vw, 3.4rem); line-height: 1.05; }
+.jg-text { margin: 0; max-width: 28ch; font: 600 1.1rem/1.4 var(--j-font-text); opacity: .95; }
+.jg-best { margin: 0; font: 800 1rem var(--j-font-text); color: var(--j-sun); min-height: 1.2em; }
+.jg-btn {
+    min-width: 200px; min-height: 58px; padding: 0 36px; margin-top: 8px;
+    border: 0; border-radius: 999px; cursor: pointer;
+    background: var(--j-sun); color: var(--j-ink);
+    font: 700 1.35rem var(--j-font); box-shadow: 0 6px 0 #C99A10;
+}
+.jg-btn:hover { background: #FFC74A; }
+.jg-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #C99A10; }
+.jg-btn.alt { background: #fff; box-shadow: 0 6px 0 #C9C2D8; }
+
+.jg-hud {
+    position: fixed; z-index: 20; pointer-events: none;
+    top: calc(10px + env(safe-area-inset-top, 0px)); left: calc(10px + env(safe-area-inset-left, 0px));
+    display: flex; gap: 8px; flex-wrap: wrap; max-width: calc(100% - 80px);
+}
+.jg-pill {
+    display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 16px;
+    border-radius: 999px; background: rgba(255,255,255,.95); color: var(--j-ink);
+    font: 700 1.1rem var(--j-font); box-shadow: 0 4px 12px -4px rgba(0,0,0,.4);
+}
+.jg-pill b { font-variant-numeric: tabular-nums; }

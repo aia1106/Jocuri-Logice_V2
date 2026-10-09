@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Math Ball - Space Edition</title>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { 
+            margin: 0; background: #0b0e18; color: white; 
+            font-family: 'Segoe UI', sans-serif; overflow: hidden; 
+            display: flex; justify-content: center; align-items: center; height: 100vh; 
+        }
+        canvas { display: block; background: radial-gradient(circle, #1b2735 0%, #090a0f 100%); }
+        #ui { position: absolute; top: 5%; width: 100%; text-align: center; pointer-events: none; z-index: 10; }
+        #question { font-size: 3.5rem; font-weight: bold; color: #ff00ff; text-shadow: 0 0 20px #ff00ff; }
+        #score { font-size: 1.5rem; color: #00f2ff; margin-top: 10px; }
+        #feedback { 
+            position: absolute; top: 40%; width: 100%; text-align: center; 
+            font-size: 4rem; font-weight: 900; color: #FFD700; 
+            opacity: 0; transition: 0.3s; pointer-events: none; text-shadow: 0 0 20px gold;
+        }
+        #overlay { 
+            position: absolute; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.85); display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; z-index: 100;
+        }
+        .btn {
+            padding: 15px 50px; font-size: 1.8rem; background: #ff00ff; color: white; 
+            border: none; border-radius: 10px; font-weight: bold; cursor: pointer; box-shadow: 0 5px #a000a0;
+        }
+    </style>
+<meta name="joc-inapoi" content="clasa1.html">
+<link rel="stylesheet" href="joc.css">
+</head>
+<body>
+
+<div id="ui">
+    <div id="question">? + ?</div>
+    <div id="score">Puncte: 0</div>
+</div>
+
+<div id="feedback">BRAVO!</div>
+
+<div id="overlay" onclick="startGame()">
+    <h1>MATH BALL 30</h1>
+    <p>Adunări cu rezultate până la 30</p>
+    <button class="btn">START</button>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const questionUI = document.getElementById('question');
+const scoreUI = document.getElementById('score');
+const feedbackUI = document.getElementById('feedback');
+const overlay = document.getElementById('overlay');
+
+let score = 0, gameActive = false, platforms = [], animationId, scale = 1;
+let currentAnswer = 0;
+
+const ball = { 
+    x: 0, y: 0, r: 22, 
+    dy: 0, jump: -16, gravity: 0.8, 
+    targetX: 0, 
+    color: "#00ff88" 
+};
+
+function setup() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    scale = Math.min(canvas.width, canvas.height) / 400;
+    ball.r = 22 * scale;
+    ball.y = canvas.height - 100 * scale;
+    ball.x = canvas.width / 2;
+    ball.targetX = ball.x;
+}
+
+window.addEventListener('resize', setup);
+setup();
+
+function generateQuestion() {
+    // REZULTAT MAXIM 30
+    const sum = Math.floor(Math.random() * 21) + 10; // Rezultat între 10 și 30
+    const n1 = Math.floor(Math.random() * (sum - 1)) + 1;
+    const n2 = sum - n1;
+    
+    currentAnswer = sum;
+    questionUI.textContent = `${n1} + ${n2} = ?`;
+    
+    platforms = [];
+    const positions = [canvas.width * 0.2, canvas.width * 0.5, canvas.width * 0.8];
+    
+    let answers = [currentAnswer, currentAnswer + 3, currentAnswer - 4];
+    // Asigurăm că variantele greșite nu sunt identice sau sub zero
+    answers = answers.map((a, i) => i === 0 ? a : Math.abs(a + (i * 2)));
+    answers.sort(() => Math.random() - 0.5);
+
+    positions.forEach((pos, i) => {
+        platforms.push({
+            x: pos - 45 * scale,
+            y: canvas.height - 220 * scale,
+            w: 90 * scale,
+            h: 20 * scale,
+            val: answers[i]
+        });
+    });
+}
+
+function startGame() {
+    score = 0; scoreUI.textContent = "Puncte: 0";
+    gameActive = true;
+    ball.color = "#00ff88";
+    overlay.style.display = 'none';
+    generateQuestion();
+    draw();
+}
+
+function showFeedback() {
+    feedbackUI.style.opacity = "1";
+    feedbackUI.style.transform = "scale(1.2)";
+    setTimeout(() => {
+        feedbackUI.style.opacity = "0";
+        feedbackUI.style.transform = "scale(1)";
+    }, 500);
+}
+
+function handleTouch(e) {
+    if (!gameActive || ball.dy !== 0) return;
+    const touchX = (e.type === 'touchstart') ? e.touches[0].clientX : e.clientX;
+    
+    let selected = platforms[0];
+    let minDist = Math.abs(touchX - (platforms[0].x + platforms[0].w/2));
+
+    platforms.forEach(p => {
+        let d = Math.abs(touchX - (p.x + p.w/2));
+        if(d < minDist) { minDist = d; selected = p; }
+    });
+
+    ball.targetX = selected.x + selected.w/2;
+    ball.dy = ball.jump * scale;
+    
+    setTimeout(() => {
+        if(selected.val === currentAnswer) {
+            score++;
+            scoreUI.textContent = "Puncte: " + score;
+            ball.color = "#FFD700"; 
+            showFeedback();
+            setTimeout(() => { if(gameActive) ball.color = "#00ff88"; }, 600);
+            generateQuestion();
+        } else {
+            ball.color = "#FF3131"; 
+            setTimeout(gameOver, 350);
+        }
+    }, 450);
+}
+
+window.addEventListener('mousedown', handleTouch);
+window.addEventListener('touchstart', (e) => { e.preventDefault(); handleTouch(e); }, {passive: false});
+
+function draw() {
+    if(!gameActive) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Stele mici pe fundal
+    ctx.fillStyle = "white";
+    for(let i=0; i<20; i++) {
+        ctx.fillRect((i*137)%canvas.width, (i*243)%canvas.height, 2, 2);
+    }
+
+    // Platforme MAGENTA CRYSTAL
+    platforms.forEach(p => {
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = "#ff00ff";
+        ctx.fillStyle = "#ff00ff";
+        ctx.beginPath();
+        ctx.roundRect(p.x, p.y, p.w, p.h, 5);
+        ctx.fill();
+        
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "white";
+        ctx.font = `bold ${26 * scale}px Arial`;
+        ctx.textAlign = "center";
+        ctx.fillText(p.val, p.x + p.w / 2, p.y + p.h + 40 * scale);
+    });
+
+    // Minge
+    ball.dy += ball.gravity * scale;
+    ball.y += ball.dy;
+    ball.x += (ball.targetX - ball.x) * 0.15;
+
+    if(ball.y > canvas.height - 60 * scale - ball.r) {
+        ball.y = canvas.height - 60 * scale - ball.r;
+        ball.dy = 0;
+    }
+
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = ball.color;
+    ctx.fillStyle = ball.color;
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+    ctx.fill();
+
+    animationId = requestAnimationFrame(draw);
+}
+
+function gameOver() {
+    gameActive = false;
+    overlay.style.display = 'flex';
+    overlay.querySelector('h1').textContent = "INCĂ O DATĂ!";
+    overlay.querySelector('p').textContent = "Scor: " + score;
+}
+</script>
+<script src="joc.js"></script>
+</body>
+</html>

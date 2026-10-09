@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="joc-inapoi" content="clasa0.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="icon" href="LOGO.png">
+<link rel="stylesheet" href="joc.css">
+<title>Orbită – Jocuri Logice</title>
+<style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #2A1450; color: #fff; overflow: hidden; touch-action: none; }
+    canvas { display: block; position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; }
+</style>
+</head>
+<body class="jg">
+<div class="jg-hud"><span class="jg-pill">⭐ <b id="score">0</b></span><span class="jg-pill">🏆 <b id="best">0</b></span></div>
+<canvas id="gameCanvas"></canvas>
+
+<div class="jg-overlay" id="overlay">
+    <div class="jg-emoji" id="ovEmoji">🪐</div>
+    <h1 class="jg-title" id="ovTitle">Orbită</h1>
+    <p class="jg-text" id="ovText">Ține apăsat ca să strângi orbita. Ferește-te de meteoriții roșii!</p>
+    <p class="jg-best" id="ovBest"></p>
+    <button class="jg-btn" id="startBtn" type="button">Start</button>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score'), bestEl = document.getElementById('best');
+const overlay = document.getElementById('overlay'), startBtn = document.getElementById('startBtn');
+
+let best = 0;
+try { best = parseInt(localStorage.getItem('orbit_best') || '0', 10) || 0; } catch (e) {}
+bestEl.textContent = best;
+
+let W, H, scale = 1, stars = [];
+function setup() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    scale = Math.min(W, H) / 400;
+    stars = Array.from({ length: 60 }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.6 + .4, a: Math.random() * .6 + .3 }));
+    if (!active) drawFrame();
+}
+
+let active = false, attracting = false, score = 0, obstacles = [], trail = [];
+let angle = 0, distance = 100, spawnIn = 0, last = 0;
+
+function init() {
+    score = 0; scoreEl.textContent = '0';
+    obstacles = []; trail = []; angle = 0; distance = 105 * scale; spawnIn = 0;
+    active = true; overlay.hidden = true; last = performance.now();
+    requestAnimationFrame(loop);
+}
+
+function spawn() {
+    const r = (9 + Math.random() * 10) * scale, side = Math.random() > .5;
+    obstacles.push({
+        x: side ? -r : W + r, y: Math.random() * H,
+        vx: (side ? 1 : -1) * (2 + Math.random() * 2.4) * scale,
+        vy: (Math.random() - .5) * 1.5 * scale, r, rot: Math.random() * 6
+    });
+}
+
+function drawBackground() {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#2A1450'); g.addColorStop(1, '#4A2370');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    for (const s of stars) { ctx.globalAlpha = s.a; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.283); ctx.fill(); }
+    ctx.globalAlpha = 1;
+}
+
+function drawFrame(px, py) {
+    drawBackground();
+    const cx = W / 2, cy = H / 2;
+    // orbite-ghid
+    ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = 2; ctx.setLineDash([6, 8]);
+    ctx.beginPath(); ctx.arc(cx, cy, 105 * scale, 0, 6.283); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, cy, 40 * scale, 0, 6.283); ctx.stroke();
+    ctx.setLineDash([]);
+    // soare
+    const sg = ctx.createRadialGradient(cx, cy, 2, cx, cy, 26 * scale);
+    sg.addColorStop(0, '#FFE08A'); sg.addColorStop(1, '#FFB81C');
+    ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(cx, cy, 15 * scale, 0, 6.283); ctx.fill();
+    ctx.globalAlpha = .25; ctx.fillStyle = '#FFB81C'; ctx.beginPath(); ctx.arc(cx, cy, 22 * scale, 0, 6.283); ctx.fill(); ctx.globalAlpha = 1;
+    if (px === undefined) return;
+    // urmă planetă
+    trail.forEach((t, i) => { ctx.globalAlpha = i / trail.length * .45; ctx.fillStyle = '#1FBF9A'; ctx.beginPath(); ctx.arc(t.x, t.y, 6 * scale * (i / trail.length), 0, 6.283); ctx.fill(); });
+    ctx.globalAlpha = 1;
+    // planetă
+    ctx.fillStyle = '#1FBF9A'; ctx.beginPath(); ctx.arc(px, py, 8 * scale, 0, 6.283); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.arc(px - 2.5 * scale, py - 2.5 * scale, 2.6 * scale, 0, 6.283); ctx.fill();
+    // meteoriți
+    for (const o of obstacles) {
+        ctx.fillStyle = '#E23B6B'; ctx.beginPath(); ctx.arc(o.x, o.y, o.r, 0, 6.283); ctx.fill();
+        ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.arc(o.x + o.r * .3, o.y + o.r * .25, o.r * .35, 0, 6.283); ctx.fill();
+        ctx.beginPath(); ctx.arc(o.x - o.r * .35, o.y - o.r * .2, o.r * .2, 0, 6.283); ctx.fill();
+    }
+}
+
+function loop(now) {
+    if (!active) return;
+    const dt = Math.min((now - last) / 16.667, 2.5); last = now;
+    const target = (attracting ? 40 : 105) * scale;
+    distance += (target - distance) * (1 - Math.pow(1 - .12, dt));
+    angle += .055 * dt;
+    const px = W / 2 + Math.cos(angle) * distance, py = H / 2 + Math.sin(angle) * distance;
+    trail.push({ x: px, y: py }); if (trail.length > 14) trail.shift();
+
+    spawnIn -= 16.667 * dt;
+    if (spawnIn <= 0) { spawn(); spawnIn = Math.max(300, 1000 - score * 8); }
+
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+        const o = obstacles[i];
+        o.x += o.vx * dt; o.y += o.vy * dt;
+        if (Math.hypot(px - o.x, py - o.y) < o.r + 6 * scale) { drawFrame(px, py); return endGame(); }
+        if (o.x < -100 || o.x > W + 100) { obstacles.splice(i, 1); score++; scoreEl.textContent = score; }
+    }
+    drawFrame(px, py);
+    requestAnimationFrame(loop);
+}
+
+function endGame() {
+    active = false;
+    if (score > best) { best = score; bestEl.textContent = best; try { localStorage.setItem('orbit_best', best); } catch (e) {} }
+    document.getElementById('ovEmoji').textContent = score >= 20 ? '🌟' : '☄️';
+    document.getElementById('ovTitle').textContent = score === 0 ? 'Hopa! Aproape!' : 'Ai evitat ' + score + (score === 1 ? ' meteorit!' : ' meteoriți!');
+    document.getElementById('ovText').textContent = 'Mai încearcă, te descurci tot mai bine!';
+    document.getElementById('ovBest').textContent = '🏆 Cel mai bun scor: ' + best;
+    startBtn.textContent = 'Încă o dată';
+    overlay.hidden = false;
+}
+
+startBtn.addEventListener('click', (e) => { e.stopPropagation(); init(); });
+const down = (e) => { if (e.target.closest && e.target.closest('.joc-inapoi, .jg-overlay')) return; attracting = true; };
+const up = () => { attracting = false; };
+window.addEventListener('pointerdown', down);
+window.addEventListener('pointerup', up);
+window.addEventListener('pointercancel', up);
+window.addEventListener('keydown', (e) => { if (e.code === 'Space') { e.preventDefault(); attracting = true; } });
+window.addEventListener('keyup', (e) => { if (e.code === 'Space') attracting = false; });
+window.addEventListener('resize', setup);
+window.addEventListener('orientationchange', setup);
+setup();
+</script>
+<script src="joc.js"></script>
+</body>
+</html>

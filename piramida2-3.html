@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Piramide Matematice Interactive</title>
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --success: #2ecc71;
+            --error: #e74c3c;
+            --bg: #f9f9ff;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .fisa {
+            background: white;
+            max-width: 700px;
+            width: 100%;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h1 { color: var(--primary); margin-bottom: 10px; }
+        .regula { font-style: italic; color: #666; margin-bottom: 30px; }
+
+        /* Stil pentru structura piramidei */
+        .pyramid {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 50px;
+        }
+
+        .row {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 5px;
+        }
+
+        .cell {
+            width: 60px;
+            height: 50px;
+            margin: 0 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #eee;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .cell input {
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        /* Validare culori */
+        input.corect {
+            border-color: var(--success) !important;
+            background-color: #eafaf1;
+            color: var(--success);
+            pointer-events: none;
+        }
+
+        input.gresit {
+            border-color: var(--error) !important;
+            background-color: #fdedec;
+            animation: shake 0.3s;
+        }
+
+        @keyframes shake {
+            0%, 100% {transform: translateX(0);}
+            25% {transform: translateX(-4px);}
+            75% {transform: translateX(4px);}
+        }
+
+        h2 { font-size: 1.2rem; color: #333; margin-top: 20px; }
+    </style>
+<meta name="joc-inapoi" content="clasa2.html">
+<link rel="stylesheet" href="joc.css">
+</head>
+<body>
+
+<div class="fisa">
+    <h1>📐 Piramide Matematice</h1>
+    <p class="regula">Regulă: Numărul de sus este suma sau produsul celor două numere de jos!</p>
+
+    <h2>1. Piramida Adunării (Suma)</h2>
+    <div class="pyramid">
+        <div class="row">
+            <div class="cell"><input type="number" data-answer="20"></div>
+        </div>
+        <div class="row">
+            <div class="cell"><input type="number" data-answer="9"></div>
+            <div class="cell"><input type="number" data-answer="11"></div>
+        </div>
+        <div class="row">
+            <div class="cell" style="background: #a29bfe; color: white;">4</div>
+            <div class="cell" style="background: #a29bfe; color: white;">5</div>
+            <div class="cell" style="background: #a29bfe; color: white;">6</div>
+        </div>
+    </div>
+
+    <h2>2. Completează golurile!</h2>
+    <div class="pyramid">
+        <div class="row">
+            <div class="cell" style="background: #a29bfe; color: white;">35</div>
+        </div>
+        <div class="row">
+            <div class="cell"><input type="number" data-answer="15"></div>
+            <div class="cell" style="background: #a29bfe; color: white;">20</div>
+        </div>
+        <div class="row">
+            <div class="cell" style="background: #a29bfe; color: white;">7</div>
+            <div class="cell"><input type="number" data-answer="8"></div>
+            <div class="cell" style="background: #a29bfe; color: white;">12</div>
+        </div>
+    </div>
+
+    <h2>3. Piramida Înmulțirii (Produsul)</h2>
+    <div class="pyramid">
+        <div class="row">
+            <div class="cell"><input type="number" data-answer="36"></div>
+        </div>
+        <div class="row">
+            <div class="cell" style="background: #fab1a0; color: white;">6</div>
+            <div class="cell"><input type="number" data-answer="6"></div>
+        </div>
+        <div class="row">
+            <div class="cell" style="background: #fab1a0; color: white;">3</div>
+            <div class="cell" style="background: #fab1a0; color: white;">2</div>
+            <div class="cell" style="background: #fab1a0; color: white;">3</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const inputs = document.querySelectorAll('input');
+
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            const val = this.value;
+            const ans = this.getAttribute('data-answer');
+
+            if (val === ans) {
+                this.classList.add('corect');
+                this.classList.remove('gresit');
+            } else if (val.length >= ans.length) {
+                this.classList.add('gresit');
+                setTimeout(() => {
+                    if (!this.classList.contains('corect')) {
+                        this.value = '';
+                        this.classList.remove('gresit');
+                    }
+                }, 1500);
+            }
+        });
+    });
+</script>
+
+<script src="joc.js"></script>
+</body>
+</html>

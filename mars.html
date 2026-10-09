@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta charset="UTF-8">
+    <title>Marte Express - Stabilizat</title>
+    <style>
+        :root {
+            --mars: #ff4757;
+            --terminal: #1e272e;
+            --cyan: #00d2d3;
+            --gold: #feca57;
+        }
+
+        body {
+            background: #0c1116;
+            color: #ecf0f1;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #game-ui {
+            width: 90%;
+            max-width: 600px;
+            background: var(--terminal);
+            border: 4px solid #3d4e5d;
+            border-radius: 20px;
+            padding: 25px;
+            position: relative;
+        }
+
+        .header { text-align: center; color: var(--mars); font-weight: bold; margin-bottom: 20px; }
+
+        .dashboard { display: flex; justify-content: space-around; margin-bottom: 30px; }
+
+        .tank-container { text-align: center; }
+        .tank-wall {
+            width: 45px; height: 160px;
+            background: #000; border: 2px solid #57606f;
+            border-radius: 10px; position: relative; overflow: hidden;
+            margin: 5px auto;
+        }
+        .fill {
+            position: absolute; bottom: 0; width: 100%;
+            transition: height 0.5s ease;
+        }
+        .val-text { font-size: 0.8rem; color: #95a5a6; }
+
+        #display {
+            background: #000; border: 1px solid #333;
+            padding: 15px; border-radius: 10px; margin-bottom: 20px;
+            min-height: 80px; text-align: center;
+        }
+
+        #error-msg {
+            color: var(--mars); font-weight: bold; height: 20px;
+            margin-bottom: 10px; text-align: center; visibility: hidden;
+        }
+
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        button {
+            background: #2c3e50; border: 1px solid var(--cyan);
+            color: var(--cyan); padding: 12px; border-radius: 8px;
+            cursor: pointer; font-weight: bold;
+        }
+        button:hover { background: var(--cyan); color: #000; }
+
+        .overlay {
+            display: none; position: absolute; inset: 0;
+            background: rgba(0,0,0,0.9); border-radius: 16px;
+            z-index: 100; flex-direction: column; align-items: center; justify-content: center;
+        }
+    </style>
+<meta name="joc-inapoi" content="clasa4.html">
+<link rel="stylesheet" href="joc.css">
+</head>
+<body>
+
+<div id="game-ui">
+    <div class="header">CONTROL RESURSE MARTE v2.0</div>
+    
+    <div id="error-msg">EROARE DE CALCUL! Scade nivelul!</div>
+
+    <div class="dashboard">
+        <div class="tank-container">
+            <div class="val-text">APĂ</div>
+            <div class="tank-wall"><div id="w-fill" class="fill" style="background: #3498db"></div></div>
+            <div id="w-txt" class="val-text">6/10</div>
+        </div>
+        <div class="tank-container">
+            <div class="val-text">OXIGEN</div>
+            <div class="tank-wall"><div id="o-fill" class="fill" style="background: #ecf0f1"></div></div>
+            <div id="o-txt" class="val-text">8/10</div>
+        </div>
+        <div class="tank-container">
+            <div class="val-text">ENERGIE</div>
+            <div class="tank-wall"><div id="e-fill" class="fill" style="background: #f1c40f"></div></div>
+            <div id="e-txt" class="val-text">4/10</div>
+        </div>
+    </div>
+
+    <div id="display">Se încarcă datele bazei...</div>
+    <div class="btn-grid" id="btns"></div>
+
+    <div id="end-ui" class="overlay">
+        <h2 id="end-title">MISIUNE FINALIZATĂ</h2>
+        <p id="end-p"></p>
+        <button onclick="location.reload()" style="background: var(--mars); color: white; border: none; padding: 15px 30px;">RESTART</button>
+    </div>
+</div>
+
+<script>
+    // Resursele sunt între 0 și 10 unități (zecimi)
+    let res = { w: 6, o: 8, e: 4 };
+    let day = 1;
+
+    function update() {
+        for(let k in res) {
+            if(res[k] > 10) res[k] = 10;
+            if(res[k] < 0) res[k] = 0;
+            document.getElementById(k+'-fill').style.height = (res[k]*10) + '%';
+            document.getElementById(k+'-txt').textContent = res[k] + '/10';
+        }
+        if(res.w === 0 || res.o === 0 || res.e === 0) finish("Resurse critice epuizate. Baza a fost pierdută.");
+    }
+
+    function getTask() {
+        const types = ['w', 'o', 'e'];
+        const target = types[Math.floor(Math.random()*3)];
+        const current = res[target];
+        
+        let question, correct, options;
+
+        // Dacă rezervorul e aproape plin, forțăm scădere. Altfel, adunare.
+        if (current >= 8) {
+            let sub = Math.floor(Math.random() * 3) + 1; // scădem 1, 2 sau 3
+            question = `Consumăm ${sub}/10 din rezerva de ${target === 'w' ? 'APĂ' : target === 'o' ? 'OXIGEN' : 'ENERGIE'}. Cât rămâne?`;
+            correct = current - sub;
+            res[target] -= sub;
+        } else {
+            let add = Math.floor(Math.random() * 3) + 1; // adunăm 1, 2 sau 3
+            question = `Am primit ${add}/10 unități de ${target === 'w' ? 'APĂ' : target === 'o' ? 'OXIGEN' : 'ENERGIE'}. Cât avem în total?`;
+            correct = current + add;
+            res[target] += add;
+        }
+
+        // Adăugăm provocarea zecimală uneori (ex: 0.5 în loc de 5/10)
+        if(Math.random() > 0.7) {
+            question = question.replace('5/10', '0.5').replace('2/10', '0.2');
+        }
+
+        document.getElementById('display').textContent = `ZIUA ${day}: ` + question;
+        renderBtns(correct, target);
+    }
+
+    function renderBtns(correct, target) {
+        const btnBox = document.getElementById('btns');
+        btnBox.innerHTML = '';
+        let answers = [correct, correct + 1, correct - 1, 5];
+        answers = [...new Set(answers)].filter(n => n >= 0 && n <= 10).sort(() => Math.random() - 0.5);
+
+        answers.forEach(val => {
+            const b = document.createElement('button');
+            b.textContent = val + "/10";
+            b.onclick = () => {
+                if(val === correct) {
+                    day++;
+                    document.getElementById('error-msg').style.visibility = 'hidden';
+                    if(day > 10) finish("Felicitări! Ai supraviețuit 10 zile pe Marte!", true);
+                    else { update(); getTask(); }
+                } else {
+                    // Penalizare: Resetăm resursa la valoarea de dinainte și mai scădem 1
+                    res[target] = Math.max(0, correct - (correct > res[target] ? 1 : -1) - 1);
+                    document.getElementById('error-msg').style.visibility = 'visible';
+                    update();
+                    getTask();
+                }
+            };
+            btnBox.appendChild(b);
+        });
+    }
+
+    function finish(m, win=false) {
+        const ui = document.getElementById('end-ui');
+        ui.style.display = 'flex';
+        document.getElementById('end-p').textContent = m;
+        if(win) document.getElementById('end-title').style.color = 'var(--cyan)';
+    }
+
+    update();
+    getTask();
+</script>
+<script src="joc.js"></script>
+</body>
+</html>

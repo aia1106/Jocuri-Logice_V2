@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Adunări Distractive pentru Preșcolari</title>
+    <style>
+        :root {
+            --primary-color: #ff9f43;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --bg-color: #f0f2f5;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .fisa {
+            background: white;
+            max-width: 600px;
+            width: 100%;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border: 5px dashed var(--primary-color);
+        }
+
+        h1 {
+            text-align: center;
+            color: #ee5253;
+            margin-bottom: 10px;
+        }
+
+        p.instructiuni {
+            text-align: center;
+            color: #576574;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .exercitiu {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #fff9f4;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .imagini {
+            font-size: 2rem;
+            letter-spacing: 5px;
+            flex: 1;
+        }
+
+        .semn {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #54a0ff;
+            margin: 0 10px;
+        }
+
+        input {
+            width: 60px;
+            height: 50px;
+            font-size: 1.5rem;
+            text-align: center;
+            border: 3px solid #ced4da;
+            border-radius: 10px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        /* Clasele pentru validare */
+        input.corect {
+            border-color: var(--success-color);
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        input.gresit {
+            border-color: var(--error-color);
+            background-color: #f8d7da;
+            color: #721c24;
+            animation: shake 0.2s ease-in-out 0s 2;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(5px); }
+            50% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+            100% { transform: translateX(0); }
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-style: italic;
+            color: #8395a7;
+        }
+    </style>
+<meta name="joc-inapoi" content="clasa0.html">
+<link rel="stylesheet" href="joc.css">
+</head>
+<body>
+
+<div class="fisa">
+    <h1>🍎 Adunări cu Imagini 🍎</h1>
+    <p class="instructiuni">Numără fructele și scrie rezultatul corect!</p>
+
+    <div id="quiz-container">
+        <div class="exercitiu">
+            <span class="imagini">🍎🍎</span>
+            <span class="semn">+</span>
+            <span class="imagini">🍎</span>
+            <span class="semn">=</span>
+            <input type="number" data-answer="3">
+        </div>
+
+        <div class="exercitiu">
+            <span class="imagini">🍓🍓🍓</span>
+            <span class="semn">+</span>
+            <span class="imagini">🍓🍓</span>
+            <span class="semn">=</span>
+            <input type="number" data-answer="5">
+        </div>
+
+        <div class="exercitiu">
+            <span class="imagini">🍍</span>
+            <span class="semn">+</span>
+            <span class="imagini">🍍</span>
+            <span class="semn">=</span>
+            <input type="number" data-answer="2">
+        </div>
+
+        <div class="exercitiu">
+            <span class="imagini">🍒🍒</span>
+            <span class="semn">+</span>
+            <span class="imagini">🍒🍒</span>
+            <span class="semn">=</span>
+            <input type="number" data-answer="4">
+        </div>
+
+        <div class="exercitiu">
+            <span class="imagini">🍌🍌🍌</span>
+            <span class="semn">+</span>
+            <span class="imagini">🍌</span>
+            <span class="semn">=</span>
+            <input type="number" data-answer="4">
+        </div>
+    </div>
+
+    <p class="footer">⭐ Bravo! Ești un mic matematician! ⭐</p>
+</div>
+
+<script>
+    document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', function() {
+            const userValue = parseInt(this.value);
+            const correctAnswer = parseInt(this.getAttribute('data-answer'));
+
+            // Verificăm doar dacă s-a introdus un număr
+            if (!isNaN(userValue)) {
+                if (userValue === correctAnswer) {
+                    // Dacă e corect
+                    this.classList.add('corect');
+                    this.classList.remove('gresit');
+                    this.disabled = true; // Opțional: blocăm inputul după succes
+                } else {
+                    // Dacă e greșit (doar dacă a introdus o cifră completă)
+                    // Verificăm lungimea pentru a nu pedepsi utilizatorul în timp ce scrie numere de 2 cifre
+                    if (this.value.length >= this.getAttribute('data-answer').length) {
+                        this.classList.add('gresit');
+                        
+                        // După 2 secunde resetăm
+                        setTimeout(() => {
+                            this.value = '';
+                            this.classList.remove('gresit');
+                        }, 2000);
+                    }
+                }
+            }
+        });
+    });
+</script>
+
+<script src="joc.js"></script>
+</body>
+</html>

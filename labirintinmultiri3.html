@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Exerciții – Jocuri Logice</title>
+<link rel="icon" href="LOGO.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="stil.css">
+<meta charset="UTF-8">
+</head>
+<body>
+<a class="skip-link" href="#continut">Sari la conținut</a>
+<header class="site-header">
+    <div class="header-top">
+        <a class="brand" href="index.html" aria-label="Jocuri Logice – pagina principală">
+            <img src="logo-palat.png" alt="" class="header-logo" width="113" height="38">
+            <span class="brand-text"><span class="site-name">Jocuri Logice</span></span>
+        </a>
+        <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="meniu"><span class="menu-icon" aria-hidden="true">☰</span><span>Meniu</span></button>
+    </div>
+    <nav aria-label="Navigare principală"><ul class="menu" id="meniu"><li><a href="index.html">Acasă</a></li><li><a href="clasa0.html">Clasa 0</a></li><li><a href="clasa1.html">Clasa I</a></li><li><a href="clasa2.html">Clasa a II-a</a></li><li><a href="clasa3.html">Clasa a III-a</a></li><li><a href="clasa4.html">Clasa a IV-a</a></li><li><a href="jocuri.html">Jocuri</a></li><li><a href="concurs.html">Concurs</a></li><li><a href="info.html">Informații</a></li><li><a href="resursedidactice.html">Resurse</a></li><li><a href="contact.html">Contact</a></li></ul></nav>
+</header>
+<main id="continut" class="legacy">
+<button id="back-button" onclick="history.back()">⬅ Înapoi</button>
+<div id="exercisesContainer"></div>
+
+<section id="labirint-inmultiri">
+    <h2>Labirintul cu înmulțiri</h2>
+    <p>Găsește drumul corect selectând doar pătratele cu înmulțiri corecte!</p>
+    <div class="grid" id="labirint">
+        <!-- Pătratele vor fi generate cu JS -->
+    </div>
+</section>
+
+<style>
+    #labirint-inmultiri {
+        padding: 20px;
+        background-color: #98cc3f;
+        text-align: center;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(5, 100px);
+        grid-gap: 10px;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .cell {
+        background-color: #68c3f7;
+        padding: 20px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background-color 0.3s, transform 0.2s;
+    }
+
+    .cell:hover {
+        transform: scale(1.05);
+    }
+
+    .cell.correct {
+        background-color: #a8e6a1;
+    }
+
+    .cell.wrong {
+        background-color: #f8b6b6;
+    }
+</style>
+
+<script>
+    const corect = [
+        "2x3=6", "3x3=9", "4x2=8", "5x2=10", "2x5=10",
+        "3x2=6", "6x1=6", "2x4=8", "1x7=7", "1x8=8"
+    ];
+
+    const gresit = [
+        "2x3=5", "3x3=6", "4x2=9", "5x2=11", "2x5=9",
+        "3x2=5", "6x1=5", "2x4=9", "1x7=6", "1x8=7"
+    ];
+
+    const toate = [...corect, ...gresit].sort(() => Math.random() - 0.5);
+    const labirint = document.getElementById("labirint");
+
+    toate.slice(0, 25).forEach(text => {
+        const div = document.createElement("div");
+        div.className = "cell";
+        div.textContent = text;
+        div.addEventListener("click", () => {
+            if (corect.includes(text)) {
+                div.classList.add("correct");
+            } else {
+                div.classList.add("wrong");
+            }
+        });
+        labirint.appendChild(div);
+    });
+</script>
+</main>
+<footer class="site-footer">
+    <img src="LOGO.png" alt="Sigla Cercului de Jocuri Logice" class="footer-logo" width="56" height="56" loading="lazy">
+    <p>&copy; 2025 Cercul de Jocuri Logice – Palatul Copiilor Arad</p>
+</footer>
+<script src="meniu.js"></script>
+</body>
+</html>

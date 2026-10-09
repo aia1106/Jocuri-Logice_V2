@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Detectivul de Numere Pro</title>
+    <style>
+        :root {
+            --accent: #ff9f43;
+            --dark: #2d3436;
+            --blue: #0984e3;
+            --bg: #f7f9fc;
+            --green: #00b894;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            color: var(--dark);
+        }
+
+        #game-board {
+            background: white;
+            padding: 30px;
+            border-radius: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 380px;
+            position: relative;
+            border: 4px solid #eee;
+        }
+
+        /* Bara de timp - acum mai lentă */
+        .timer-bar {
+            width: 100%;
+            height: 12px;
+            background: #eee;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        #progress {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), #ff6b6b);
+            transition: width 0.15s linear;
+        }
+
+        #equation {
+            font-size: 2.8rem;
+            margin: 30px 0;
+            font-weight: bold;
+        }
+
+        .missing {
+            color: var(--blue);
+            background: #e1f5fe;
+            padding: 0 15px;
+            border-radius: 10px;
+            border-bottom: 4px solid var(--blue);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        button {
+            padding: 20px;
+            font-size: 1.6rem;
+            border: 2px solid #dfe6e9;
+            background: #f8f9fa;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+            color: var(--dark);
+        }
+
+        button:hover { 
+            background: var(--blue); 
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(9, 132, 227, 0.3);
+        }
+
+        /* Ecran Game Over ascuns inițial */
+        #game-over-screen {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 30px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .btn-restart {
+            background: var(--green);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            margin-top: 20px;
+        }
+
+        .stats-top { font-size: 1.1rem; margin-bottom: 15px; font-weight: 600; }
+    </style>
+<meta name="joc-inapoi" content="clasa2.html">
+<link rel="stylesheet" href="joc.css">
+</head>
+<body>
+
+<div class="stats-top">
+    🏆 Record: <span id="highscore">0</span> | Scor: <span id="score">0</span>
+</div>
+
+<div id="game-board">
+    <div id="game-over-screen">
+        <h2 style="color: #d63031; font-size: 2rem;">Timpul a expirat! ⏱️</h2>
+        <p style="font-size: 1.2rem;">Scorul tău: <span id="final-score">0</span></p>
+        <button class="btn-restart" onclick="restartGame()">Joacă din nou! 🚀</button>
+    </div>
+
+    <div class="timer-bar"><div id="progress"></div></div>
+    
+    <div id="equation">...</div>
+    
+    <div class="grid" id="options">
+        </div>
+</div>
+
+<script>
+    let score = 0;
+    let highscore = localStorage.getItem('mathHighscoreV2') || 0;
+    let timeLeft = 100;
+    let timerInterval;
+    let correctAnswer;
+    let isGameOver = false;
+
+    document.getElementById('highscore').textContent = highscore;
+
+    function startGame() {
+        isGameOver = false;
+        score = 0;
+        timeLeft = 100;
+        document.getElementById('score').textContent = "0";
+        document.getElementById('game-over-screen').style.display = 'none';
+        generateChallenge();
+        startTimer();
+    }
+
+    function generateChallenge() {
+        const types = ['add', 'sub', 'mul', 'div'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        let a, b, c, op;
+
+        if (type === 'add') {
+            a = rand(1, 50); b = rand(1, 40); c = a + b; op = '+';
+        } else if (type === 'sub') {
+            c = rand(1, 50); b = rand(1, 30); a = c + b; op = '-';
+        } else if (type === 'mul') {
+            a = rand(2, 9); b = rand(1, 10); c = a * b; op = '×';
+        } else { // div
+            b = rand(2, 9); c = rand(1, 10); a = b * c; op = '÷';
+        }
+        
+        setupDisplay(a, b, c, op);
+    }
+
+    function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+    function setupDisplay(a, b, c, op) {
+        const hole = rand(0, 2);
+        let html = "";
+        
+        if (hole === 0) { correctAnswer = a; html = `<span class="missing">?</span> ${op} ${b} = ${c}`; }
+        else if (hole === 1) { correctAnswer = b; html = `${a} ${op} <span class="missing">?</span> = ${c}`; }
+        else { correctAnswer = c; html = `${a} ${op} ${b} = <span class="missing">?</span>`; }
+
+        document.getElementById('equation').innerHTML = html;
+        createButtons(correctAnswer);
+    }
+
+    function createButtons(correct) {
+        const grid = document.getElementById('options');
+        grid.innerHTML = '';
+        let choices = [correct];
+        
+        while(choices.length < 4) {
+            let fake = correct + rand(-5, 5);
+            if(fake >= 0 && !choices.includes(fake)) choices.push(fake);
+        }
+        
+        choices.sort(() => Math.random() - 0.5).forEach(val => {
+            const btn = document.createElement('button');
+            btn.textContent = val;
+            btn.onclick = () => check(val);
+            grid.appendChild(btn);
+        });
+    }
+
+    function check(val) {
+        if(isGameOver) return;
+
+        if(val === correctAnswer) {
+            score += 10;
+            timeLeft = Math.min(timeLeft + 20, 100); // Bonus de timp generos
+            document.getElementById('score').textContent = score;
+            generateChallenge();
+        } else {
+            timeLeft -= 15; // Penalizare la greșeală
+            document.getElementById('progress').style.background = "#d63031";
+            setTimeout(() => { 
+                document.getElementById('progress').style.background = "linear-gradient(90deg, var(--accent), #ff6b6b)";
+            }, 300);
+        }
+    }
+
+    function startTimer() {
+        if(timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            if(!isGameOver) {
+                timeLeft -= 0.4; // TIMP DUBLAT (scade de 2 ori mai lent ca înainte)
+                document.getElementById('progress').style.width = timeLeft + "%";
+                if(timeLeft <= 0) gameOver();
+            }
+        }, 100);
+    }
+
+    function gameOver() {
+        isGameOver = true;
+        clearInterval(timerInterval);
+        document.getElementById('final-score').textContent = score;
+        document.getElementById('game-over-screen').style.display = 'flex';
+        
+        if(score > highscore) {
+            highscore = score;
+            localStorage.setItem('mathHighscoreV2', highscore);
+            document.getElementById('highscore').textContent = highscore;
+        }
+    }
+
+    function restartGame() {
+        startGame();
+    }
+
+    startGame();
+</script>
+
+<script src="joc.js"></script>
+</body>
+</html>

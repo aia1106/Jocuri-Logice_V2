@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="joc-inapoi" content="clasa0.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="icon" href="LOGO.png">
+<link rel="stylesheet" href="joc.css">
+<title>Gravity Flip – Jocuri Logice</title>
+<style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #2A1450; color: #fff; overflow: hidden; touch-action: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+    #gameCanvas { display: block; border-radius: 24px; box-shadow: 0 18px 40px -16px rgba(0,0,0,.6); touch-action: none; }
+    .hint { margin: 0; font: 700 1rem var(--j-font-text); color: #D9CCEB; text-align: center; padding: 0 16px; }
+</style>
+</head>
+<body class="jg">
+<div class="jg-hud"><span class="jg-pill">⭐ <b id="score">0</b></span><span class="jg-pill">🏆 <b id="best">0</b></span></div>
+<canvas id="gameCanvas"></canvas>
+<p class="hint">Atinge ecranul sau apasă Spațiu ca să schimbi gravitația</p>
+
+<div class="jg-overlay" id="overlay">
+    <div class="jg-emoji" id="ovEmoji">🔄</div>
+    <h1 class="jg-title" id="ovTitle">Gravity Flip</h1>
+    <p class="jg-text" id="ovText">Atinge ecranul ca să cazi în sus sau în jos. Ocolește țepii!</p>
+    <p class="jg-best" id="ovBest"></p>
+    <button class="jg-btn" id="startBtn" type="button">Start</button>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score'), bestEl = document.getElementById('best');
+const overlay = document.getElementById('overlay'), startBtn = document.getElementById('startBtn');
+
+let best = 0;
+try { best = parseInt(localStorage.getItem('gravity_best') || '0', 10) || 0; } catch (e) {}
+bestEl.textContent = best;
+
+let W = 400, H = 300, S = 1, dpr = 1;
+const player = { x: 0, y: 0, w: 30, h: 30, dy: 0, onCeiling: false, rot: 0 };
+let state = 'ready', score = 0, speed = 5, obstacles = [], spawnIn = 0, last = 0, scroll = 0;
+
+function setup() {
+    if (state === 'play') return;
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = Math.min(window.innerWidth - 16, 760);
+    H = Math.max(260, Math.min(window.innerHeight * .6, 460));
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    S = H / 400;
+    player.w = player.h = 32 * S; player.x = 60 * S; player.y = H - player.h;
+    draw();
+}
+
+function init() {
+    score = 0; scoreEl.textContent = '0'; obstacles = []; speed = 5; scroll = 0; spawnIn = 0;
+    player.y = H - player.h; player.dy = 0; player.onCeiling = false; player.rot = 0;
+    state = 'play'; overlay.hidden = true; last = performance.now();
+    requestAnimationFrame(loop);
+}
+
+function flip() { if (state === 'play') player.onCeiling = !player.onCeiling; }
+
+function spawn() {
+    const ceil = Math.random() > .5;
+    obstacles.push({ x: W + 40, w: (40 + Math.random() * 36) * S, h: (60 + Math.random() * 70) * S, ceil });
+}
+
+function loop(now) {
+    if (state !== 'play') return;
+    const dt = Math.min((now - last) / 16.667, 2.5); last = now;
+    const g = (player.onCeiling ? -.9 : .9) * S;
+    player.dy += g * dt; player.y += player.dy * dt;
+    if (player.y <= 0) { player.y = 0; player.dy = 0; }
+    if (player.y + player.h >= H) { player.y = H - player.h; player.dy = 0; }
+    player.rot += ((player.onCeiling ? Math.PI : 0) - player.rot) * (1 - Math.pow(1 - .25, dt));
+
+    spawnIn -= 16.667 * dt;
+    if (spawnIn <= 0) { spawn(); spawnIn = Math.max(450, 1400 - score * 30); }
+    scroll += speed * S * dt;
+
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+        const o = obstacles[i];
+        o.x -= speed * S * dt;
+        const m = 7 * S;
+        if (player.x + player.w - m > o.x + o.w * .2 && player.x + m < o.x + o.w * .8) {
+            if (o.ceil && player.y < o.h * .75 - m) { draw(); return gameOver(); }
+            if (!o.ceil && player.y + player.h > H - o.h * .75 + m) { draw(); return gameOver(); }
+        }
+        if (o.x + o.w < -20) { obstacles.splice(i, 1); score++; scoreEl.textContent = score; speed += .08; }
+    }
+    draw();
+    requestAnimationFrame(loop);
+}
+
+function draw() {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#E23B6B'); g.addColorStop(.45, '#6A3BA0'); g.addColorStop(1, '#3B1D63');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    // dungi care se mișcă
+    ctx.fillStyle = 'rgba(255,255,255,.1)';
+    for (let i = 0; i < 7; i++) {
+        const x = (((i * 140 * S - scroll * .5) % (W + 140 * S)) + (W + 140 * S)) % (W + 140 * S) - 60 * S;
+        ctx.fillRect(x, H * (.25 + (i % 3) * .22), 70 * S, 5 * S);
+    }
+    // podea și tavan
+    ctx.fillStyle = '#FFB81C'; ctx.fillRect(0, 0, W, 8 * S); ctx.fillRect(0, H - 8 * S, W, 8 * S);
+    // țepi
+    for (const o of obstacles) {
+        ctx.fillStyle = '#FFB81C'; ctx.beginPath();
+        if (o.ceil) { ctx.moveTo(o.x, 0); ctx.lineTo(o.x + o.w / 2, o.h); ctx.lineTo(o.x + o.w, 0); }
+        else { ctx.moveTo(o.x, H); ctx.lineTo(o.x + o.w / 2, H - o.h); ctx.lineTo(o.x + o.w, H); }
+        ctx.fill();
+        ctx.fillStyle = 'rgba(35,27,51,.18)'; ctx.beginPath();
+        if (o.ceil) { ctx.moveTo(o.x + o.w / 2, 0); ctx.lineTo(o.x + o.w / 2, o.h); ctx.lineTo(o.x + o.w, 0); }
+        else { ctx.moveTo(o.x + o.w / 2, H); ctx.lineTo(o.x + o.w / 2, H - o.h); ctx.lineTo(o.x + o.w, H); }
+        ctx.fill();
+    }
+    // jucător: pătrat mentă cu ochi
+    ctx.save();
+    ctx.translate(player.x + player.w / 2, player.y + player.h / 2); ctx.rotate(player.rot);
+    const w = player.w, h = player.h, r = 8 * S;
+    ctx.fillStyle = '#1FBF9A';
+    ctx.beginPath(); ctx.moveTo(-w / 2 + r, -h / 2); ctx.arcTo(w / 2, -h / 2, w / 2, h / 2, r); ctx.arcTo(w / 2, h / 2, -w / 2, h / 2, r); ctx.arcTo(-w / 2, h / 2, -w / 2, -h / 2, r); ctx.arcTo(-w / 2, -h / 2, w / 2, -h / 2, r); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(-w * .18, -h * .05, 5 * S, 0, 6.283); ctx.arc(w * .18, -h * .05, 5 * S, 0, 6.283); ctx.fill();
+    ctx.fillStyle = '#231B33'; ctx.beginPath(); ctx.arc(-w * .15, -h * .03, 2.4 * S, 0, 6.283); ctx.arc(w * .21, -h * .03, 2.4 * S, 0, 6.283); ctx.fill();
+    ctx.restore();
+}
+
+function gameOver() {
+    state = 'over';
+    if (score > best) { best = score; bestEl.textContent = best; try { localStorage.setItem('gravity_best', best); } catch (e) {} }
+    document.getElementById('ovEmoji').textContent = score >= 15 ? '🌟' : '🙃';
+    document.getElementById('ovTitle').textContent = score === 0 ? 'Hopa! Aproape!' : 'Ai trecut de ' + score + (score === 1 ? ' țep!' : ' țepi!');
+    document.getElementById('ovText').textContent = 'Încearcă din nou, ai tot mai mult ritm!';
+    document.getElementById('ovBest').textContent = '🏆 Cel mai bun scor: ' + best;
+    startBtn.textContent = 'Încă o dată';
+    overlay.hidden = false;
+}
+
+startBtn.addEventListener('click', (e) => { e.stopPropagation(); init(); });
+window.addEventListener('pointerdown', (e) => { if (e.target.closest && e.target.closest('.joc-inapoi, .jg-overlay')) return; flip(); });
+window.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'ArrowDown') { e.preventDefault(); if (state === 'play') flip(); else if (!overlay.hidden) init(); } });
+window.addEventListener('resize', setup);
+window.addEventListener('orientationchange', () => setTimeout(setup, 200));
+setup();
+</script>
+<script src="joc.js"></script>
+</body>
+</html>

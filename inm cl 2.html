@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Mate: Înmulțiri și Împărțiri</title>
+    <style>
+        :root {
+            --primary: #9b59b6;
+            --success: #2ecc71;
+            --error: #e74c3c;
+            --bg: #fdfaff;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .fisa {
+            background: white;
+            max-width: 600px;
+            width: 100%;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 4px solid var(--primary);
+        }
+
+        h1 { text-align: center; color: #8e44ad; margin-bottom: 20px; }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #eee;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        #progress-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #9b59b6, #2ecc71);
+            transition: width 0.4s;
+        }
+
+        .exercitii-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .exercitiu {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #eee;
+        }
+
+        .operatie { font-weight: bold; font-size: 1.1rem; }
+
+        input {
+            width: 60px;
+            height: 40px;
+            text-align: center;
+            font-size: 1.2rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        /* Culori de stare obligatorii */
+        input.corect {
+            border-color: var(--success) !important;
+            background-color: #ecfdf5 !important;
+            color: #155724 !important;
+            font-weight: bold;
+            pointer-events: none; /* Nu mai poate fi modificat */
+        }
+
+        input.gresit {
+            border-color: var(--error) !important;
+            background-color: #fff5f5 !important;
+            color: #721c24 !important;
+            animation: shake 0.3s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .full-width { grid-column: span 2; background: #f0f7ff; }
+
+        @media (max-width: 500px) {
+            .exercitii-grid { grid-template-columns: 1fr; }
+            .full-width { grid-column: span 1; }
+        }
+    </style>
+<meta name="joc-inapoi" content="clasa2.html">
+<link rel="stylesheet" href="joc.css">
+</head>
+<body>
+
+<div class="fisa">
+    <h1>✖️ Înmulțiri și Împărțiri ➗</h1>
+    
+    <div class="progress-bar">
+        <div id="progress-fill"></div>
+    </div>
+
+    <div class="exercitii-grid">
+        <div class="exercitiu"><span class="operatie">2 × 3 × 4 =</span> <input type="number" data-answer="24"></div>
+        <div class="exercitiu"><span class="operatie">18 ÷ 3 ÷ 2 =</span> <input type="number" data-answer="3"></div>
+        <div class="exercitiu"><span class="operatie">5 × 1 × 9 =</span> <input type="number" data-answer="45"></div>
+        <div class="exercitiu"><span class="operatie">24 ÷ 4 × 2 =</span> <input type="number" data-answer="12"></div>
+        <div class="exercitiu"><span class="operatie">3 × 3 × 3 =</span> <input type="number" data-answer="27"></div>
+        <div class="exercitiu"><span class="operatie">16 ÷ 2 ÷ 4 =</span> <input type="number" data-answer="2"></div>
+        <div class="exercitiu"><span class="operatie">4 × 2 × 3 =</span> <input type="number" data-answer="24"></div>
+        <div class="exercitiu"><span class="operatie">36 ÷ 6 ÷ 2 =</span> <input type="number" data-answer="3"></div>
+
+        <div class="exercitiu full-width"><span class="operatie">2 × x × 4 = 16 | x =</span> <input type="number" data-answer="2"></div>
+        <div class="exercitiu full-width"><span class="operatie">12 ÷ a ÷ 2 = 2 | a =</span> <input type="number" data-answer="3"></div>
+    </div>
+</div>
+
+<script>
+    const allInputs = document.querySelectorAll('input');
+
+    allInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            const userVal = this.value;
+            const correctVal = this.getAttribute('data-answer');
+
+            // Resetăm culoarea dacă utilizatorul șterge
+            if (userVal === "") {
+                this.classList.remove('gresit', 'corect');
+                return;
+            }
+
+            // Verificare corectitudine
+            if (userVal === correctVal) {
+                this.classList.remove('gresit');
+                this.classList.add('corect');
+                updateProgress();
+            } else {
+                // Dacă lungimea introdusă e cel puțin egală cu a răspunsului, e greșit
+                if (userVal.length >= correctVal.length) {
+                    this.classList.add('gresit');
+                    setTimeout(() => {
+                        if (!this.classList.contains('corect')) {
+                            this.value = "";
+                            this.classList.remove('gresit');
+                        }
+                    }, 2000);
+                }
+            }
+        });
+    });
+
+    function updateProgress() {
+        const correctCount = document.querySelectorAll('input.corect').length;
+        const totalCount = allInputs.length;
+        const progress = (correctCount / totalCount) * 100;
+        document.getElementById('progress-fill').style.width = progress + '%';
+
+        if (correctCount === totalCount) {
+            setTimeout(() => alert("Felicitări! Ești un geniu la matematică! 🏆"), 300);
+        }
+    }
+</script>
+
+<script src="joc.js"></script>
+</body>
+</html>

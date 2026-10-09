@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="joc-inapoi" content="clasa0.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="icon" href="LOGO.png">
+<link rel="stylesheet" href="joc.css">
+<title>Salt peste țepi – Jocuri Logice</title>
+<style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #2A1450; color: #fff; overflow: hidden; touch-action: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+    #canvas { display: block; border-radius: 24px; box-shadow: 0 18px 40px -16px rgba(0,0,0,.6); touch-action: none; }
+    .hint { margin: 0; font: 700 1rem var(--j-font-text); color: #D9CCEB; text-align: center; padding: 0 16px; }
+</style>
+</head>
+<body class="jg">
+<div class="jg-hud"><span class="jg-pill">⭐ <b id="score">0</b></span><span class="jg-pill">🏆 <b id="best">0</b></span></div>
+<canvas id="canvas"></canvas>
+<p class="hint">Atinge ecranul sau apasă Spațiu / ↑ ca să sari</p>
+
+<div class="jg-overlay" id="overlay">
+    <div class="jg-emoji" id="ovEmoji">🟨</div>
+    <h1 class="jg-title" id="ovTitle">Salt peste țepi</h1>
+    <p class="jg-text" id="ovText">Atinge ecranul ca să sari peste țepii roșii.</p>
+    <p class="jg-best" id="ovBest"></p>
+    <button class="jg-btn" id="startBtn" type="button">Start</button>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score'), bestEl = document.getElementById('best');
+const overlay = document.getElementById('overlay'), startBtn = document.getElementById('startBtn');
+
+let best = 0;
+try { best = parseInt(localStorage.getItem('dash_best') || '0', 10) || 0; } catch (e) {}
+bestEl.textContent = best;
+
+let W = 600, H = 300, S = 1, GROUND = 14, dpr = 1;
+const player = { x: 0, y: 0, w: 30, h: 30, dy: 0, grounded: true, rot: 0 };
+let state = 'ready', score = 0, speed = 5, obstacles = [], particles = [], spawnIn = 0, last = 0, scroll = 0;
+
+function setup() {
+    if (state === 'play') return;
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = Math.min(window.innerWidth - 16, 720);
+    H = Math.max(240, Math.min(window.innerHeight * .55, 400));
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    S = H / 300; GROUND = 16 * S;
+    player.w = player.h = 32 * S; player.x = 60 * S; player.y = H - GROUND - player.h;
+    draw();
+}
+
+function resetGame() {
+    score = 0; speed = 5; obstacles = []; particles = [];
+    player.dy = 0; player.grounded = true; player.rot = 0; player.y = H - GROUND - player.h;
+    spawnIn = 0; scroll = 0; scoreEl.textContent = '0';
+    state = 'play'; overlay.hidden = true; last = performance.now();
+    requestAnimationFrame(loop);
+}
+
+function jump() {
+    if (state !== 'play') return;
+    if (player.grounded) { player.dy = -12.5 * S; player.grounded = false; }
+}
+
+function spawn() {
+    const size = (22 + Math.random() * 26) * S;
+    obstacles.push({ x: W + 10, w: size, h: size });
+}
+
+function burst(x, y) {
+    for (let i = 0; i < 6; i++) particles.push({ x, y, dx: (Math.random() - .5) * 4 * S, dy: -Math.random() * 3 * S, life: 1 });
+}
+
+function loop(now) {
+    if (state !== 'play') return;
+    const dt = Math.min((now - last) / 16.667, 2.5); last = now;
+    const floor = H - GROUND - player.h;
+
+    player.dy += .8 * S * dt;
+    player.y += player.dy * dt;
+    if (player.y >= floor) {
+        if (!player.grounded) burst(player.x + player.w / 2, H - GROUND);
+        player.y = floor; player.dy = 0; player.grounded = true; player.rot = 0;
+    } else player.rot += .1 * dt;
+
+    spawnIn -= 16.667 * dt;
+    if (spawnIn <= 0) { spawn(); spawnIn = Math.max(550, 1000 + Math.random() * 1800 - speed * 50); }
+
+    scroll += speed * S * dt;
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+        const o = obstacles[i];
+        o.x -= speed * S * dt;
+        const m = 5 * S, top = H - GROUND - o.h;
+        if (player.x + player.w - m > o.x + o.w * .15 && player.x + m < o.x + o.w * .85 && player.y + player.h - m > top + o.h * .25) {
+            draw(); return gameOver();
+        }
+        if (o.x + o.w < 0) { obstacles.splice(i, 1); score++; scoreEl.textContent = score; speed += .1; }
+    }
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i]; p.x += p.dx * dt; p.y += p.dy * dt; p.dy += .2 * S * dt; p.life -= .03 * dt;
+        if (p.life <= 0) particles.splice(i, 1);
+    }
+    draw();
+    requestAnimationFrame(loop);
+}
+
+function draw() {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#3B1D63'); g.addColorStop(.65, '#6A3BA0'); g.addColorStop(1, '#E23B6B');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    // nori
+    ctx.fillStyle = 'rgba(255,255,255,.12)';
+    for (let i = 0; i < 4; i++) {
+        const cx = ((i * 260 * S - scroll * .25) % (W + 200 * S) + (W + 200 * S)) % (W + 200 * S) - 100 * S, cy = (40 + (i % 2) * 40) * S;
+        ctx.beginPath(); ctx.arc(cx, cy, 20 * S, 0, 6.283); ctx.arc(cx + 24 * S, cy + 4 * S, 16 * S, 0, 6.283); ctx.arc(cx - 22 * S, cy + 6 * S, 14 * S, 0, 6.283); ctx.fill();
+    }
+    // sol
+    ctx.fillStyle = '#1FBF9A'; ctx.fillRect(0, H - GROUND, W, GROUND);
+    ctx.fillStyle = '#14937A';
+    for (let x = -((scroll) % (40 * S)); x < W; x += 40 * S) ctx.fillRect(x, H - GROUND, 18 * S, 4 * S);
+    // țepi
+    for (const o of obstacles) {
+        ctx.fillStyle = '#E8541F'; ctx.beginPath();
+        ctx.moveTo(o.x, H - GROUND); ctx.lineTo(o.x + o.w / 2, H - GROUND - o.h); ctx.lineTo(o.x + o.w, H - GROUND); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,.28)'; ctx.beginPath();
+        ctx.moveTo(o.x + o.w * .3, H - GROUND - o.h * .1); ctx.lineTo(o.x + o.w / 2, H - GROUND - o.h * .82); ctx.lineTo(o.x + o.w * .46, H - GROUND - o.h * .1); ctx.fill();
+    }
+    // particule
+    for (const p of particles) { ctx.globalAlpha = Math.max(p.life, 0); ctx.fillStyle = '#FFB81C'; ctx.fillRect(p.x, p.y, 4 * S, 4 * S); }
+    ctx.globalAlpha = 1;
+    // jucător: pătrat galben cu ochi
+    ctx.save();
+    ctx.translate(player.x + player.w / 2, player.y + player.h / 2); ctx.rotate(player.rot);
+    ctx.fillStyle = '#FFB81C';
+    const r = 8 * S, w = player.w, h = player.h;
+    ctx.beginPath(); ctx.moveTo(-w / 2 + r, -h / 2); ctx.arcTo(w / 2, -h / 2, w / 2, h / 2, r); ctx.arcTo(w / 2, h / 2, -w / 2, h / 2, r); ctx.arcTo(-w / 2, h / 2, -w / 2, -h / 2, r); ctx.arcTo(-w / 2, -h / 2, w / 2, -h / 2, r); ctx.fill();
+    ctx.fillStyle = '#231B33';
+    ctx.beginPath(); ctx.arc(-w * .17, -h * .08, 3.4 * S, 0, 6.283); ctx.arc(w * .17, -h * .08, 3.4 * S, 0, 6.283); ctx.fill();
+    ctx.strokeStyle = '#231B33'; ctx.lineWidth = 2 * S; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(0, h * .1, w * .16, .2, Math.PI - .2); ctx.stroke();
+    ctx.restore();
+}
+
+function gameOver() {
+    state = 'over';
+    if (score > best) { best = score; bestEl.textContent = best; try { localStorage.setItem('dash_best', best); } catch (e) {} }
+    document.getElementById('ovEmoji').textContent = score >= 15 ? '🌟' : '😅';
+    document.getElementById('ovTitle').textContent = score === 0 ? 'Hopa! Aproape!' : 'Ai sărit ' + score + (score === 1 ? ' țep!' : ' țepi!');
+    document.getElementById('ovText').textContent = 'Încearcă din nou, ai tot mai mult ritm!';
+    document.getElementById('ovBest').textContent = '🏆 Cel mai bun scor: ' + best;
+    startBtn.textContent = 'Încă o dată';
+    overlay.hidden = false;
+}
+
+startBtn.addEventListener('click', (e) => { e.stopPropagation(); resetGame(); });
+window.addEventListener('pointerdown', (e) => { if (e.target.closest && e.target.closest('.joc-inapoi, .jg-overlay')) return; jump(); });
+window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); if (state === 'play') jump(); else if (state !== 'play' && !overlay.hidden) resetGame(); }
+});
+window.addEventListener('resize', setup);
+window.addEventListener('orientationchange', () => setTimeout(setup, 200));
+setup();
+</script>
+<script src="joc.js"></script>
+</body>
+</html>

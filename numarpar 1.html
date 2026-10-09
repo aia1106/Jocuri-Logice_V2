@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Identifică Numere Pare și Impare – Jocuri Logice</title>
+<link rel="icon" href="LOGO.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="stil.css">
+<meta charset="UTF-8">
+    
+    
+     <!-- Adăugat pentru stilizarea header-ului și footer-ului -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding:px;
+            text-align: center;
+        }
+        .quiz-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .instructions {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        .answers {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        .answer-btn {
+            width: 80px;
+            height: 80px;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 24px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+        .answer-btn:hover {
+            background-color: #45a049;
+        }
+        .result {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .next-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #008CBA;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            display: none;
+        }
+        .next-btn:hover {
+            background-color: #007bb5;
+        }
+    </style>
+</head>
+<body>
+<a class="skip-link" href="#continut">Sari la conținut</a>
+<header class="site-header">
+    <div class="header-top">
+        <a class="brand" href="index.html" aria-label="Jocuri Logice – pagina principală">
+            <img src="logo-palat.png" alt="" class="header-logo" width="113" height="38">
+            <span class="brand-text"><span class="site-name">Jocuri Logice</span></span>
+        </a>
+        <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="meniu"><span class="menu-icon" aria-hidden="true">☰</span><span>Meniu</span></button>
+    </div>
+    <nav aria-label="Navigare principală"><ul class="menu" id="meniu"><li><a href="index.html">Acasă</a></li><li><a href="clasa0.html">Clasa 0</a></li><li><a href="clasa1.html">Clasa I</a></li><li><a href="clasa2.html">Clasa a II-a</a></li><li><a href="clasa3.html">Clasa a III-a</a></li><li><a href="clasa4.html">Clasa a IV-a</a></li><li><a href="jocuri.html">Jocuri</a></li><li><a href="concurs.html">Concurs</a></li><li><a href="info.html">Informații</a></li><li><a href="resursedidactice.html">Resurse</a></li><li><a href="contact.html">Contact</a></li></ul></nav>
+</header>
+<main id="continut" class="legacy">
+<!-- HEADER de la de_ce.html -->
+    
+
+    <!-- CONȚINUTUL PAGINII numarpar 1.html -->
+    <div class="quiz-container">
+        <h1>Identifică Numerele</h1>
+        <div class="instructions" id="instructions">Selectează numărul par</div>
+        <div class="answers">
+            <button class="answer-btn" data-value="0">0</button>
+            <button class="answer-btn" data-value="1">1</button>
+            <button class="answer-btn" data-value="2">2</button>
+            <button class="answer-btn" data-value="3">3</button>
+        </div>
+        <div class="result" id="result"></div>
+        <button class="next-btn" id="next-btn">Următoarea rundă</button>
+    </div>
+
+    <!-- FOOTER de la de_ce.html -->
+    
+
+     <!-- Adăugat pentru meniul header-ului -->
+    <script>
+        const quizData = [
+            { type: 'par', numbers: [2, 7, 5, 9], correct: 0 },
+            { type: 'impar', numbers: [1, 8, 4, 6], correct: 0 },
+            { type: 'par', numbers: [1, 9, 10, 7], correct: 2 },
+            { type: 'impar', numbers: [2, 12, 11, 2], correct: 2 },
+            { type: 'par', numbers: [1, 12, 11, 3], correct: 1 },
+            { type: 'impar', numbers: [2, 8, 7, 6], correct: 2 }
+        ];
+
+        let currentQuestion = 0;
+        const instructionsElement = document.getElementById('instructions');
+        const answerButtons = document.querySelectorAll('.answer-btn');
+        const resultElement = document.getElementById('result');
+        const nextButton = document.getElementById('next-btn');
+
+        function loadQuestion() {
+            const currentQuizData = quizData[currentQuestion];
+            instructionsElement.textContent = `Selectează numărul ${currentQuizData.type}`;
+            answerButtons.forEach((button, index) => {
+                button.textContent = currentQuizData.numbers[index];
+            });
+            resultElement.textContent = '';
+            nextButton.style.display = 'none';
+        }
+
+        function checkAnswer(answerIndex) {
+            const currentQuizData = quizData[currentQuestion];
+            const correctAnswer = currentQuizData.correct;
+
+            if (answerIndex == correctAnswer) {
+                resultElement.textContent = 'Răspuns corect!';
+                resultElement.style.color = 'green';
+            } else {
+                resultElement.textContent = 'Răspuns greșit!';
+                resultElement.style.color = 'red';
+            }
+
+            nextButton.style.display = 'block';
+        }
+
+        answerButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const answerIndex = button.getAttribute('data-value');
+                checkAnswer(answerIndex);
+            });
+        });
+
+        nextButton.addEventListener('click', () => {
+            currentQuestion++;
+            if (currentQuestion < quizData.length) {
+                loadQuestion();
+            } else {
+                resultElement.textContent = 'Ai terminat toate rundele!';
+                nextButton.style.display = 'none';
+                instructionsElement.textContent = '';
+            }
+        });
+
+        loadQuestion();
+    </script>
+</main>
+<footer class="site-footer">
+    <img src="LOGO.png" alt="Sigla Cercului de Jocuri Logice" class="footer-logo" width="56" height="56" loading="lazy">
+    <p>&copy; 2025 Cercul de Jocuri Logice – Palatul Copiilor Arad</p>
+</footer>
+<script src="meniu.js"></script>
+</body>
+</html>

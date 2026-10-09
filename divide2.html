@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Math Ninja - Division Quest</title>
+    <style>
+        :root {
+            --neon-blue: #00d2ff;
+            --neon-purple: #9d50bb;
+            --success: #00ff88;
+            --error: #ff4b2b;
+            --dark-bg: #050505;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: var(--dark-bg);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+
+        /* Fundal animat tip Roblox */
+        .bg-glow {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, var(--neon-purple) 0%, transparent 70%);
+            filter: blur(80px);
+            opacity: 0.3;
+            z-index: -1;
+            transition: background 0.5s;
+        }
+
+        #game-card {
+            background: rgba(20, 20, 20, 0.8);
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            padding: 40px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+            transition: transform 0.2s;
+        }
+
+        .header-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 20px;
+            border-radius: 15px;
+            border-bottom: 3px solid var(--neon-blue);
+        }
+
+        #score { color: var(--success); }
+        #lives { color: var(--error); }
+
+        .question-container {
+            margin: 40px 0;
+        }
+
+        .question-text {
+            font-size: 4rem;
+            font-weight: 800;
+            background: linear-gradient(to bottom, #fff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+        }
+
+        .grid-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .btn-option {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            font-size: 1.8rem;
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .btn-option:hover {
+            transform: translateY(-5px);
+            background: var(--neon-blue);
+            box-shadow: 0 10px 20px rgba(0, 210, 255, 0.3);
+        }
+
+        .btn-option:active { transform: scale(0.95); }
+
+        /* Animații Feedback */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .wrong-answer {
+            animation: shake 0.4s;
+            border-color: var(--error) !important;
+        }
+
+        .correct-pulse {
+            box-shadow: 0 0 30px var(--success) !important;
+        }
+    </style>
+<meta name="joc-inapoi" content="clasa2.html">
+<link rel="stylesheet" href="joc.css">
+</head>
+<body>
+
+<div class="bg-glow" id="glow"></div>
+
+<div id="game-card">
+    <div class="header-stats">
+        <div class="stat-box">SCOR: <span id="score">0</span></div>
+        <div class="stat-box">VIEȚI: <span id="lives">3</span></div>
+    </div>
+
+    <div class="question-container">
+        <p style="color: #aaa; margin-bottom: 5px; letter-spacing: 2px;">REZOLVĂ:</p>
+        <h1 class="question-text" id="display-q">20 ÷ 4</h1>
+    </div>
+
+    <div class="grid-options" id="options-bin">
+        </div>
+</div>
+
+<script>
+    let score = 0;
+    let lives = 3;
+    let currentAnswer = 0;
+
+    const glow = document.getElementById('glow');
+    const card = document.getElementById('game-card');
+    const scoreEl = document.getElementById('score');
+    const livesEl = document.getElementById('lives');
+    const questionEl = document.getElementById('display-q');
+    const optionsBin = document.getElementById('options-bin');
+
+    function initGame() {
+        // Generăm componentele împărțirii (fără rest)
+        // Rezultat între 1 și 10, Împărțitor între 1 și 10
+        let result = Math.floor(Math.random() * 9) + 2; 
+        let divisor = Math.floor(Math.random() * 8) + 2;
+        let dividend = result * divisor;
+
+        currentAnswer = result;
+        questionEl.innerText = `${dividend} ÷ ${divisor}`;
+
+        // Generăm variante de răspuns
+        let choices = [currentAnswer];
+        while(choices.length < 4) {
+            let wrong = currentAnswer + Math.floor(Math.random() * 10) - 5;
+            if(wrong > 0 && !choices.includes(wrong)) {
+                choices.push(wrong);
+            }
+        }
+
+        // Amestecăm variantele
+        choices.sort(() => Math.random() - 0.5);
+
+        optionsBin.innerHTML = '';
+        choices.forEach(val => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-option';
+            btn.innerText = val;
+            btn.onclick = () => checkResult(val);
+            optionsBin.appendChild(btn);
+        });
+    }
+
+    function checkResult(picked) {
+        if(picked === currentAnswer) {
+            // Feedback Succes
+            score += 10;
+            scoreEl.innerText = score;
+            glow.style.background = `radial-gradient(circle, var(--success) 0%, transparent 70%)`;
+            card.classList.add('correct-pulse');
+            
+            setTimeout(() => {
+                card.classList.remove('correct-pulse');
+                glow.style.background = `radial-gradient(circle, var(--neon-purple) 0%, transparent 70%)`;
+                initGame();
+            }, 500);
+
+        } else {
+            // Feedback Eroare
+            lives--;
+            livesEl.innerText = lives;
+            card.classList.add('wrong-answer');
+            glow.style.background = `radial-gradient(circle, var(--error) 0%, transparent 70%)`;
+
+            setTimeout(() => {
+                card.classList.remove('wrong-answer');
+                glow.style.background = `radial-gradient(circle, var(--neon-purple) 0%, transparent 70%)`;
+                if(lives <= 0) {
+                    alert(`Joc terminat! Scorul tău: ${score}`);
+                    score = 0;
+                    lives = 3;
+                    scoreEl.innerText = "0";
+                    livesEl.innerText = "3";
+                }
+                initGame();
+            }, 500);
+        }
+    }
+
+    // Start
+    initGame();
+</script>
+
+<script src="joc.js"></script>
+</body>
+</html>

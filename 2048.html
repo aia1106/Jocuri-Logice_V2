@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="joc-inapoi" content="clasa4.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="icon" href="LOGO.png">
+<link rel="stylesheet" href="joc.css">
+<title>2048 – Jocuri Logice</title>
+<style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #F8F7FB; color: #231B33; overflow: hidden; touch-action: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 12px; }
+    .top { width: min(92vw, 420px); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    h1 { margin: 0; font: 700 clamp(2.4rem, 11vw, 3.6rem)/1 var(--j-font); color: #4A2370; }
+    .scores { display: flex; gap: 8px; }
+    .box { min-width: 76px; padding: 6px 12px; border-radius: 16px; background: #4A2370; color: #fff; text-align: center; font: 700 1.25rem var(--j-font); line-height: 1.1; }
+    .box small { display: block; font: 800 .7rem var(--j-font-text); letter-spacing: .06em; text-transform: uppercase; opacity: .8; }
+    #board { --gap: 10px; position: relative; width: min(92vw, 420px); aspect-ratio: 1; padding: var(--gap); background: #D9CCEB; border-radius: 24px; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); gap: var(--gap); touch-action: none; }
+    .cell { border-radius: 14px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.45); font: 700 clamp(1.4rem, 8vw, 2.2rem) var(--j-font); color: #4A2370; }
+    .cell.pop { animation: pop .18s ease-out; }
+    @keyframes pop { 0% { transform: scale(.6); } 100% { transform: scale(1); } }
+    .v2 { background: #fff; } .v4 { background: #EFE3FA; } .v8 { background: #FFD36E; } .v16 { background: #FFB81C; }
+    .v32 { background: #FF9A5C; color: #fff; } .v64 { background: #E8541F; color: #fff; } .v128 { background: #F58AA8; color: #fff; font-size: clamp(1.2rem, 7vw, 1.9rem); }
+    .v256 { background: #E23B6B; color: #fff; font-size: clamp(1.2rem, 7vw, 1.9rem); } .v512 { background: #B66BD8; color: #fff; font-size: clamp(1.2rem, 7vw, 1.9rem); }
+    .v1024 { background: #6A3BA0; color: #fff; font-size: clamp(1rem, 6vw, 1.6rem); } .v2048 { background: #1FBF9A; color: #fff; font-size: clamp(1rem, 6vw, 1.6rem); }
+    .vbig { background: #231B33; color: #fff; font-size: clamp(1rem, 6vw, 1.5rem); }
+    .hint { margin: 0; max-width: 34ch; text-align: center; font: 700 .95rem/1.4 var(--j-font-text); color: #5B5270; }
+    .newbtn { min-height: 44px; padding: 0 22px; border: 0; border-radius: 999px; background: #E23B6B; color: #fff; font: 700 1.05rem var(--j-font); cursor: pointer; box-shadow: 0 4px 0 #B82A53; }
+    .newbtn:active { transform: translateY(3px); box-shadow: 0 1px 0 #B82A53; }
+    .jg-overlay { position: absolute; border-radius: 24px; }
+    .jg-overlay .jg-title { font-size: clamp(1.8rem, 8vw, 2.6rem); }
+</style>
+</head>
+<body class="jg">
+<div class="top">
+    <h1>2048</h1>
+    <div class="scores"><div class="box"><small>Scor</small><span id="score">0</span></div><div class="box"><small>Record</small><span id="best">0</span></div></div>
+</div>
+<div id="board" aria-label="Tabla de joc 2048">
+    <div class="jg-overlay" id="overlay" hidden>
+        <div class="jg-emoji" id="ovEmoji">🎉</div>
+        <h2 class="jg-title" id="ovTitle"></h2>
+        <p class="jg-text" id="ovText"></p>
+        <button class="jg-btn" id="ovBtn" type="button">Din nou</button>
+    </div>
+</div>
+<p class="hint">Glisează sau folosește săgețile. Când două numere egale se ating, se unesc!</p>
+<button class="newbtn" id="newBtn" type="button">Joc nou</button>
+
+<script>
+const N = 4;
+let grid, score, best = 0, won = false, over = false, newCells = [];
+try { best = parseInt(localStorage.getItem('g2048_best') || '0', 10) || 0; } catch (e) {}
+const boardEl = document.getElementById('board'), scoreEl = document.getElementById('score'), bestEl = document.getElementById('best');
+const overlay = document.getElementById('overlay');
+bestEl.textContent = best;
+
+const cells = [];
+for (let i = 0; i < N * N; i++) { const c = document.createElement('div'); c.className = 'cell'; boardEl.insertBefore(c, overlay); cells.push(c); }
+
+function newGame() {
+    grid = Array.from({ length: N }, () => Array(N).fill(0));
+    score = 0; won = false; over = false; newCells = [];
+    overlay.hidden = true;
+    addTile(); addTile(); render();
+}
+
+function addTile() {
+    const empty = [];
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (!grid[r][c]) empty.push([r, c]);
+    if (!empty.length) return;
+    const [r, c] = empty[Math.floor(Math.random() * empty.length)];
+    grid[r][c] = Math.random() < .9 ? 2 : 4;
+    newCells.push(r * N + c);
+}
+
+function render() {
+    cells.forEach((el, i) => {
+        const v = grid[Math.floor(i / N)][i % N];
+        el.className = 'cell' + (v ? ' ' + (v <= 2048 ? 'v' + v : 'vbig') : '') + (newCells.includes(i) ? ' pop' : '');
+        el.textContent = v || '';
+    });
+    newCells = [];
+    scoreEl.textContent = score;
+    if (score > best) { best = score; bestEl.textContent = best; try { localStorage.setItem('g2048_best', best); } catch (e) {} }
+}
+
+/* glisează o linie spre stânga: întoarce [linieNouă, puncte, s-a schimbat] */
+function slideLine(line) {
+    const nums = line.filter(Boolean), out = []; let pts = 0;
+    for (let i = 0; i < nums.length; i++) {
+        if (nums[i] === nums[i + 1]) { out.push(nums[i] * 2); pts += nums[i] * 2; i++; } else out.push(nums[i]);
+    }
+    while (out.length < N) out.push(0);
+    return [out, pts, out.some((v, i) => v !== line[i])];
+}
+
+function move(dir) {
+    if (over) return;
+    let moved = false;
+    for (let k = 0; k < N; k++) {
+        let line = [];
+        for (let j = 0; j < N; j++) {
+            const [r, c] = dir === 'left' ? [k, j] : dir === 'right' ? [k, N - 1 - j] : dir === 'up' ? [j, k] : [N - 1 - j, k];
+            line.push(grid[r][c]);
+        }
+        const [res, pts, changed] = slideLine(line);
+        if (changed) moved = true;
+        score += pts;
+        for (let j = 0; j < N; j++) {
+            const [r, c] = dir === 'left' ? [k, j] : dir === 'right' ? [k, N - 1 - j] : dir === 'up' ? [j, k] : [N - 1 - j, k];
+            grid[r][c] = res[j];
+        }
+    }
+    if (!moved) return;
+    addTile(); render(); checkEnd();
+}
+
+function canMove() {
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+        if (!grid[r][c]) return true;
+        if (c < N - 1 && grid[r][c] === grid[r][c + 1]) return true;
+        if (r < N - 1 && grid[r][c] === grid[r + 1][c]) return true;
+    }
+    return false;
+}
+
+function showEnd(emoji, title, text, btn) {
+    document.getElementById('ovEmoji').textContent = emoji;
+    document.getElementById('ovTitle').textContent = title;
+    document.getElementById('ovText').textContent = text;
+    document.getElementById('ovBtn').textContent = btn;
+    overlay.hidden = false;
+}
+
+function checkEnd() {
+    if (!won && grid.some(row => row.includes(2048))) { won = true; showEnd('🏆', 'Ai ajuns la 2048!', 'Felicitări! Poți continua să joci pentru un scor mai mare.', 'Continuă'); return; }
+    if (!canMove()) { over = true; showEnd('🙂', 'Nu mai sunt mutări', 'Scorul tău: ' + score, 'Joc nou'); }
+}
+
+document.getElementById('ovBtn').addEventListener('click', () => { if (over) newGame(); else overlay.hidden = true; });
+document.getElementById('newBtn').addEventListener('click', newGame);
+
+window.addEventListener('keydown', (e) => {
+    const map = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', a: 'left', d: 'right', w: 'up', s: 'down' };
+    if (map[e.key]) { e.preventDefault(); move(map[e.key]); }
+});
+
+let sx = 0, sy = 0, tracking = false;
+boardEl.addEventListener('pointerdown', (e) => { sx = e.clientX; sy = e.clientY; tracking = true; });
+window.addEventListener('pointerup', (e) => {
+    if (!tracking) return; tracking = false;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+    if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 'right' : 'left'); else move(dy > 0 ? 'down' : 'up');
+});
+newGame();
+</script>
+<script src="joc.js"></script>
+</body>
+</html>

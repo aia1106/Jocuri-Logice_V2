@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Nava spațială – Jocuri Logice</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        html, body { height: 100%; }
+        body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100dvh; background-color: #050505; font-family: 'Courier New', monospace; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+        #game-container { position: relative; flex: none; width: 360px; height: 640px; transform-origin: center center; background-color: #000; border: 3px solid #333; border-radius: 10px; overflow: hidden; }
+        
+        .star { position: absolute; background: white; border-radius: 50%; pointer-events: none; }
+        #ui-layer { position: absolute; top: 10px; left: 10px; color: #0f0; font-size: 16px; z-index: 100; pointer-events: none; }
+        #power-up-status { color: #ff0; font-weight: bold; display: none; }
+
+        #player { position: absolute; width: 40px; height: 45px; z-index: 50; pointer-events: none; transition: opacity 0.1s; }
+        .rocket-body { width: 20px; height: 35px; background: #e0e0e0; margin: 0 auto; border-radius: 50% 50% 10% 10%; position: relative; border-top: 5px solid #f00; }
+        .wing { position: absolute; bottom: 5px; width: 15px; height: 15px; background: #f00; }
+        .wing.left { left: -10px; clip-path: polygon(100% 0, 0 100%, 100% 100%); }
+        .wing.right { right: -10px; clip-path: polygon(0 0, 0 100%, 100% 100%); }
+
+        .bullet { position: absolute; width: 4px; height: 15px; background: #0ff; box-shadow: 0 0 10px #0ff; }
+        /* Glonț inamic */
+        .e-bullet { position: absolute; width: 6px; height: 12px; background: #ff00ff; box-shadow: 0 0 8px #ff00ff; border-radius: 3px; }
+
+        .enemy { position: absolute; width: 30px; height: 30px; display: flex; justify-content: center; align-items: center; font-size: 20px; }
+        .enemy.big { width: 60px; height: 60px; border: 2px solid #ff0; border-radius: 10px; font-size: 40px; background: rgba(255,0,0,0.2); }
+        .gift { position: absolute; width: 30px; height: 30px; background: #ff0; border-radius: 5px; display: flex; justify-content: center; align-items: center; font-size: 20px; animation: pulse 0.5s infinite alternate; }
+        
+        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.2); } }
+        .explosion { position: absolute; width: 40px; height: 40px; background: orange; border-radius: 50%; animation: explode 0.3s forwards; }
+        @keyframes explode { 0% { transform: scale(0.1); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } }
+
+        #game-over { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; flex-direction: column; justify-content: center; align-items: center; color: #f00; z-index: 200; }
+        button { padding: 14px 28px; min-height: 48px; background: #0f0; border: none; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 20px; }
+        /* RESTYLE-RACHETA: stilul unitar al site-ului */
+        body { background: #2A1450; font-family: "Nunito", "Segoe UI", sans-serif; }
+        #game-container { background: linear-gradient(#2A1450, #4A2370); border: 6px solid #6A3BA0; border-radius: 28px; box-shadow: 0 18px 40px -16px rgba(0,0,0,.6); }
+        #ui-layer { top: 12px; left: 12px; color: #231B33; font: 700 15px/1.35 "Fredoka", "Trebuchet MS", sans-serif; background: rgba(255,255,255,.95); padding: 6px 14px; border-radius: 18px; }
+        #power-up-status { color: #B87500; }
+        .rocket-body { background: #fff; border-top-color: #E23B6B; }
+        .wing { background: #E23B6B; }
+        .bullet { background: #FFB81C; box-shadow: 0 0 10px #FFB81C; border-radius: 3px; }
+        .e-bullet { background: #1FBF9A; box-shadow: 0 0 8px #1FBF9A; }
+        .enemy.big { border-color: #FFB81C; background: rgba(226,59,107,.25); }
+        .gift { background: #FFB81C; }
+        .explosion { background: #FFB81C; }
+        #game-over { background: rgba(42,20,80,.92); color: #fff; }
+        #game-over h1 { font: 700 2.4rem "Fredoka", "Trebuchet MS", sans-serif; margin: 0; }
+        #game-over p { color: #FFB81C !important; font: 800 1.2rem "Nunito", sans-serif; margin: 10px 0 0; }
+        button { background: #FFB81C; color: #231B33; border-radius: 999px; font: 700 1.2rem "Fredoka", "Trebuchet MS", sans-serif; min-height: 56px; padding: 0 32px; box-shadow: 0 6px 0 #C99A10; }
+        button:active { transform: translateY(4px); box-shadow: 0 2px 0 #C99A10; }
+    </style>
+<meta name="joc-inapoi" content="clasa1.html">
+<link rel="stylesheet" href="joc.css">
+</head>
+<body>
+
+<div id="game-container">
+    <div id="ui-layer">
+        Scor: <span id="score">0</span> | Vieți: <span id="lives">3</span><br>
+        <span id="power-up-status">VITEZĂ MAXIMĂ! (<span id="pu-count">0</span>)</span>
+    </div>
+    <div id="player"><div class="rocket-body"><div class="wing left"></div><div class="wing right"></div></div></div>
+    <div id="game-over"><h1 style="text-align:center">Încearcă din nou!</h1><p>Scor: <span id="final-score">0</span></p><button onclick="restartGame()">JOACĂ DIN NOU</button></div>
+</div>
+
+<script>
+    const container = document.getElementById('game-container');
+    const player = document.getElementById('player');
+    const scoreText = document.getElementById('score');
+    const livesText = document.getElementById('lives');
+    const puStatus = document.getElementById('power-up-status');
+    const puCountText = document.getElementById('pu-count');
+
+    let score = 0, lives = 3, gameActive = true;
+    let playerX = 160, playerY = 500;
+    let scale = 1;
+    function fit() {
+        scale = Math.min((window.innerHeight - 16) / 646, (window.innerWidth - 8) / 366, 1.5);
+        container.style.transform = 'scale(' + scale + ')';
+    }
+    window.addEventListener('resize', fit);
+    window.addEventListener('orientationchange', fit);
+    fit();
+    function placePlayer() { player.style.left = playerX + 'px'; player.style.top = playerY + 'px'; }
+    placePlayer();
+    let enemiesDefeated = 0;
+    let isInvincible = false;
+    
+    let fireRate = 300; 
+    let powerUpActive = false;
+    let powerUpDuration = 0;
+    let lastShotTime = 0;
+
+    let bullets = [], eBullets = [], enemies = [], gifts = [], stars = [];
+
+    function createStars() {
+        for(let i=0; i<50; i++) {
+            const s = document.createElement('div');
+            s.className = 'star';
+            const size = Math.random() * 3;
+            const speed = size * 0.5 + 0.5;
+            const x = Math.random() * 360;
+            const y = Math.random() * 640;
+            s.style.width = size + 'px'; s.style.height = size + 'px';
+            s.style.left = x + 'px'; s.style.top = y + 'px';
+            container.appendChild(s);
+            stars.push({ el: s, y: y, speed: speed });
+        }
+    }
+
+    const moveShip = (e) => {
+        if (!gameActive) return;
+        const rect = container.getBoundingClientRect();
+        const pt = e.touches ? e.touches[0] : e;
+        // pe telefon, nava stă puțin deasupra degetului, ca să fie vizibilă
+        const lift = e.touches ? 50 : 20;
+        playerX = (pt.clientX - rect.left) / scale - 20;
+        playerY = (pt.clientY - rect.top) / scale - lift;
+        playerX = Math.max(0, Math.min(320, playerX));
+        playerY = Math.max(0, Math.min(590, playerY));
+        placePlayer();
+    };
+
+    container.addEventListener('mousemove', moveShip);
+    container.addEventListener('touchstart', (e) => { e.preventDefault(); moveShip(e); }, {passive: false});
+    container.addEventListener('touchmove', (e) => { e.preventDefault(); moveShip(e); }, {passive: false});
+
+    // tastatură: săgeți sau A/D/W/S
+    const keys = {};
+    window.addEventListener('keydown', (e) => { keys[e.key.toLowerCase()] = true; if (e.key.startsWith('Arrow')) e.preventDefault(); });
+    window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+    function keyboardMove() {
+        if (!gameActive) return;
+        let dx = 0, dy = 0;
+        if (keys['arrowleft'] || keys['a']) dx -= 7;
+        if (keys['arrowright'] || keys['d']) dx += 7;
+        if (keys['arrowup'] || keys['w']) dy -= 7;
+        if (keys['arrowdown'] || keys['s']) dy += 7;
+        if (dx || dy) {
+            playerX = Math.max(0, Math.min(320, playerX + dx));
+            playerY = Math.max(0, Math.min(590, playerY + dy));
+            placePlayer();
+        }
+    }
+
+    function createEnemy() {
+        if (!gameActive) return;
+        const isBig = (enemiesDefeated > 0 && enemiesDefeated % 10 === 0);
+        const e = document.createElement('div');
+        e.className = isBig ? 'enemy big' : 'enemy';
+        e.innerHTML = isBig ? '👾' : '🛸';
+        const x = Math.random() * (isBig ? 300 : 330);
+        const y = -70;
+        e.style.left = x + 'px';
+        e.style.top = y + 'px';
+        container.appendChild(e);
+        
+        // Inamicul trage dacă e Big sau dacă e norocos (șansă de 30%)
+        const canShoot = isBig || Math.random() < 0.3;
+        enemies.push({ el: e, x: x, y: y, hp: isBig ? 3 : 1, big: isBig, canShoot: canShoot, lastShot: Date.now() + Math.random()*2000 });
+        
+        if (enemiesDefeated > 0 && enemiesDefeated % 15 === 0) createGift();
+    }
+
+    function createEnemyBullet(x, y, isBig) {
+        const eb = document.createElement('div');
+        eb.className = 'e-bullet';
+        eb.style.left = (x + (isBig ? 27 : 12)) + 'px';
+        eb.style.top = (y + (isBig ? 60 : 30)) + 'px';
+        container.appendChild(eb);
+        eBullets.push({ el: eb, x: x + (isBig ? 27 : 12), y: y + (isBig ? 60 : 30) });
+    }
+
+    function createGift() {
+        const g = document.createElement('div');
+        g.className = 'gift';
+        g.innerHTML = '🎁';
+        const x = Math.random() * 330;
+        const y = -30;
+        g.style.left = x + 'px'; g.style.top = y + 'px';
+        container.appendChild(g);
+        gifts.push({ el: g, x: x, y: y });
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+        keyboardMove();
+
+        stars.forEach(s => {
+            s.y += s.speed;
+            if (s.y > 640) s.y = -5;
+            s.el.style.top = s.y + 'px';
+        });
+
+        let now = Date.now();
+        if (now - lastShotTime > fireRate) {
+            const b = document.createElement('div');
+            b.className = 'bullet';
+            b.style.left = (playerX + 18) + 'px'; b.style.top = (playerY) + 'px';
+            container.appendChild(b);
+            bullets.push({ el: b, y: playerY, x: playerX + 18 });
+            lastShotTime = now;
+        }
+
+        bullets.forEach((b, i) => {
+            b.y -= 10;
+            b.el.style.top = b.y + 'px';
+            if (b.y < -20) { b.el.remove(); bullets.splice(i, 1); }
+        });
+
+        // Logica gloanțe inamici
+        eBullets.forEach((eb, i) => {
+            eb.y += 6;
+            eb.el.style.top = eb.y + 'px';
+            // Coliziune glonț inamic -> Jucător
+            if (!isInvincible && eb.y > playerY && eb.y < playerY + 40 && eb.x > playerX && eb.x < playerX + 40) {
+                takeDamage();
+                eb.el.remove();
+                eBullets.splice(i, 1);
+            }
+            if (eb.y > 640) { eb.el.remove(); eBullets.splice(i, 1); }
+        });
+
+        gifts.forEach((g, i) => {
+            g.y += 3;
+            g.el.style.top = g.y + 'px';
+            if (g.y + 30 > playerY && g.y < playerY + 45 && g.x + 30 > playerX && g.x < playerX + 40) {
+                activatePowerUp();
+                g.el.remove(); gifts.splice(i, 1);
+            }
+        });
+
+        enemies.forEach((e, ei) => {
+            e.y += e.big ? 1.2 : 2.5;
+            e.el.style.top = e.y + 'px';
+            const hitBox = e.big ? 60 : 30;
+
+            // Inamicul trage la fiecare 2 secunde
+            if (e.canShoot && now - e.lastShot > 2000) {
+                createEnemyBullet(e.x, e.y, e.big);
+                e.lastShot = now;
+            }
+
+            bullets.forEach((b, bi) => {
+                if (b.y < e.y + hitBox && b.y > e.y && b.x > e.x && b.x < e.x + hitBox) {
+                    e.hp--;
+                    b.el.remove(); bullets.splice(bi, 1);
+                    if (e.hp <= 0) {
+                        createExplosion(e.x, e.y, e.big);
+                        e.el.remove(); enemies.splice(ei, 1);
+                        score += e.big ? 50 : 10;
+                        scoreText.innerText = score;
+                        enemiesDefeated++;
+                        checkPowerUpProgress();
+                    }
+                }
+            });
+
+            if (!isInvincible && e.y + (hitBox-5) > playerY && e.y < playerY + 40 && e.x + hitBox > playerX && e.x < playerX + 40) {
+                takeDamage();
+                if (!e.big) { e.el.remove(); enemies.splice(ei, 1); }
+            }
+            if (e.y > 640) { e.el.remove(); enemies.splice(ei, 1); }
+        });
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    function takeDamage() {
+        lives--;
+        livesText.innerText = lives;
+        container.style.boxShadow = "inset 0 0 50px red";
+        setTimeout(() => container.style.boxShadow = "none", 200);
+        if (lives <= 0) {
+            gameActive = false;
+            document.getElementById('final-score').innerText = score; document.getElementById('game-over').style.display = 'flex';
+        } else {
+            isInvincible = true;
+            player.style.opacity = "0.5";
+            setTimeout(() => { isInvincible = false; player.style.opacity = "1"; }, 1500);
+        }
+    }
+
+    function activatePowerUp() {
+        powerUpActive = true;
+        powerUpDuration = 8;
+        fireRate = 120;
+        puStatus.style.display = 'inline';
+        puCountText.innerText = powerUpDuration;
+    }
+
+    function checkPowerUpProgress() {
+        if (powerUpActive) {
+            powerUpDuration--;
+            puCountText.innerText = powerUpDuration;
+            if (powerUpDuration <= 0) {
+                powerUpActive = false;
+                fireRate = 300;
+                puStatus.style.display = 'none';
+            }
+        }
+    }
+
+    function createExplosion(x, y, isBig) {
+        const div = document.createElement('div');
+        div.className = 'explosion';
+        div.style.left = x + 'px'; div.style.top = y + 'px';
+        if (isBig) { div.style.width = "80px"; div.style.height = "80px"; }
+        container.appendChild(div);
+        setTimeout(() => div.remove(), 300);
+    }
+
+    function restartGame() { location.reload(); }
+
+    createStars();
+    setInterval(createEnemy, 1200);
+    gameLoop();
+</script>
+<script src="joc.js"></script>
+</body>
+</html>

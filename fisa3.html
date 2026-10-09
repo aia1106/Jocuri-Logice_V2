@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Mate Clasa a II-a - Tabla Înmulțirii</title>
+    <style>
+        :root {
+            --primary: #f39c12;
+            --success: #27ae60;
+            --error: #e74c3c;
+            --bg: #fffcf4;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .fisa {
+            background: white;
+            max-width: 600px;
+            width: 100%;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(243, 156, 18, 0.1);
+            border: 3px solid var(--primary);
+        }
+
+        h1 { text-align: center; color: #d35400; }
+        .progress-bar { width: 100%; height: 12px; background: #eee; border-radius: 10px; margin: 20px 0; overflow: hidden; }
+        #fill { width: 0%; height: 100%; background: var(--primary); transition: width 0.4s; }
+
+        .sectiune-titlu { font-weight: bold; color: #e67e22; margin: 20px 0 10px; border-bottom: 2px solid #eee; }
+
+        .exercitiu {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 1.2rem;
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        input {
+            width: 70px;
+            height: 40px;
+            text-align: center;
+            font-size: 1.2rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        input.corect { border-color: var(--success); background-color: #eafaf1; color: var(--success); pointer-events: none; }
+        input.gresit { border-color: var(--error); background-color: #fdedec; animation: shake 0.3s; }
+
+        @keyframes shake { 0%, 100% {transform: translateX(0);} 25% {transform: translateX(-5px);} 75% {transform: translateX(5px);} }
+        
+        .win-msg { display: none; text-align: center; color: var(--success); font-weight: bold; font-size: 1.4rem; margin-top: 20px; }
+    </style>
+<meta name="joc-inapoi" content="clasa2.html">
+<link rel="stylesheet" href="joc.css">
+</head>
+<body>
+
+<div class="fisa">
+    <h1>☀️ Super Mate - Clasa a II-a</h1>
+    
+    <div class="progress-bar"><div id="fill"></div></div>
+
+    <div class="sectiune-titlu">I. Înmulțiri și Împărțiri (Tabla înmulțirii)</div>
+    <div class="exercitiu"><span>4 × 5 =</span> <input type="number" data-answer="20"></div>
+    <div class="exercitiu"><span>7 × 3 =</span> <input type="number" data-answer="21"></div>
+    <div class="exercitiu"><span>16 : 2 =</span> <input type="number" data-answer="8"></div>
+    <div class="exercitiu"><span>40 : 5 =</span> <input type="number" data-answer="8"></div>
+
+    <div class="sectiune-titlu">II. Adunări și Scăderi (0-100)</div>
+    <div class="exercitiu"><span>36 + 24 =</span> <input type="number" data-answer="60"></div>
+    <div class="exercitiu"><span>82 - 15 =</span> <input type="number" data-answer="67"></div>
+
+    <div class="sectiune-titlu">III. Logică și Necunoscute</div>
+    <div class="exercitiu"><span>Jumătatea lui 18 este:</span> <input type="number" data-answer="9"></div>
+    <div class="exercitiu"><span>x × 2 = 14 | x =</span> <input type="number" data-answer="7"></div>
+
+    <div id="win" class="win-msg">🌟 Excelent! Ești un campion la mate! 🏆</div>
+</div>
+
+<script>
+    const inputs = document.querySelectorAll('input');
+    const fill = document.getElementById('fill');
+
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            const val = this.value;
+            const ans = this.getAttribute('data-answer');
+
+            if (val === ans) {
+                this.classList.add('corect');
+                this.classList.remove('gresit');
+                update();
+            } else if (val.length >= ans.length) {
+                this.classList.add('gresit');
+                setTimeout(() => {
+                    if (!this.classList.contains('corect')) {
+                        this.value = '';
+                        this.classList.remove('gresit');
+                    }
+                }, 2000);
+            }
+        });
+    });
+
+    function update() {
+        const correct = document.querySelectorAll('input.corect').length;
+        const total = inputs.length;
+        fill.style.width = (correct / total * 100) + '%';
+        if (correct === total) document.getElementById('win').style.display = 'block';
+    }
+</script>
+
+<script src="joc.js"></script>
+</body>
+</html>

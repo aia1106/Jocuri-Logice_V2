@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="joc-inapoi" content="clasa0.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="icon" href="LOGO.png">
+<link rel="stylesheet" href="joc.css">
+<title>ArrowMaze – Jocuri Logice</title>
+<style>
+    * { box-sizing: border-box; }
+    body { background: #F8F7FB; color: #231B33; text-align: center; padding: 16px 12px 40px; min-height: 100vh; }
+    h1 { margin: 56px 0 4px; font-size: clamp(2rem, 8vw, 2.8rem); color: #4A2370; line-height: 1.1; }
+    .sub { margin: 0 auto 6px; max-width: 34ch; font: 600 1.05rem/1.4 var(--j-font-text); color: #5B5270; }
+    .legend { display: flex; flex-wrap: wrap; gap: 8px 14px; justify-content: center; margin: 10px 0 0; font: 700 .9rem var(--j-font-text); color: #5B5270; }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .legend i { width: 16px; height: 16px; border-radius: 5px; display: inline-block; }
+    .levelbar { display: flex; gap: 8px; justify-content: center; margin: 14px 0 0; }
+    .levelbar span { min-width: 44px; padding: 6px 14px; border-radius: 999px; font-weight: 700; background: #fff; border: 2px solid #E6E2EE; color: #5B5270; }
+    .levelbar span.on { background: #4A2370; border-color: #4A2370; color: #fff; }
+    #maze { --gap: 5px; --cell: min(54px, calc((100vw - 28px - 7 * var(--gap)) / 8));
+        display: grid; grid-template-columns: repeat(8, var(--cell)); gap: var(--gap); justify-content: center; margin: 18px auto; padding: 12px; background: #fff; border: 2px solid #E6E2EE; border-radius: 24px; width: fit-content; max-width: 100%; }
+    .cell { width: var(--cell); height: var(--cell); border-radius: 12px; display: flex; align-items: center; justify-content: center;
+        font: 700 calc(var(--cell) * .55)/1 var(--j-font); color: #4A2370; background: #EFE9F7; border: 2px solid #D9CCEB; cursor: pointer; transition: transform .1s; }
+    .cell:active { transform: scale(.92); }
+    .cell.wall { background: repeating-linear-gradient(45deg, #E6E2EE, #E6E2EE 5px, #F1EEF6 5px, #F1EEF6 10px); border-color: #E6E2EE; cursor: default; }
+    .cell.start { background: #C9F2E8; border-color: #1FBF9A; }
+    .cell.exit { background: #FFE9A8; border-color: #FFB81C; cursor: default; font-size: calc(var(--cell) * .5); }
+    .cell.loop { background: #FBC9D7; border-color: #E23B6B; cursor: default; }
+    .cell.loop::after { content: "✕"; color: #B82A53; }
+    .cell.player { background: #E23B6B; border-color: #B82A53; color: #fff; box-shadow: 0 0 0 4px rgba(226,59,107,.25); }
+    .cell:focus-visible { outline: 4px solid #FFB81C; outline-offset: 2px; }
+    #startBtn { min-height: 56px; padding: 0 40px; border: 0; border-radius: 999px; background: #E23B6B; color: #fff; font: 700 1.3rem var(--j-font); cursor: pointer; box-shadow: 0 6px 0 #B82A53; }
+    #startBtn:active { transform: translateY(4px); box-shadow: 0 2px 0 #B82A53; }
+    #startBtn:disabled { opacity: .5; cursor: default; }
+    #info { min-height: 1.6em; margin: 14px 0 0; font: 800 1.1rem var(--j-font-text); }
+    #timer { margin: 4px 0 0; font: 700 1.2rem var(--j-font); color: #4A2370; min-height: 1.4em; }
+    .board { max-width: 360px; margin: 24px auto 0; padding: 16px 20px; background: #fff; border: 2px solid #E6E2EE; border-radius: 20px; text-align: left; }
+    .board h3 { margin: 0 0 6px; font-size: 1.2rem; color: #4A2370; }
+    #leaderboard { margin: 0; padding-left: 1.2rem; font: 600 1rem/1.7 var(--j-font-text); color: #5B5270; }
+</style>
+</head>
+<body class="jg">
+
+<h1>ArrowMaze</h1>
+<p class="sub">Răsucește săgețile cu un tap, apoi apasă Start. Ajută-l pe puncte să ajungă la steag!</p>
+<div class="legend"><span><i style="background:#C9F2E8;border:2px solid #1FBF9A"></i>Start</span><span><i style="background:#FFE9A8;border:2px solid #FFB81C"></i>Final</span><span><i style="background:#E6E2EE"></i>Zid</span><span><i style="background:#FBC9D7;border:2px solid #E23B6B"></i>Buclă</span></div>
+<div class="levelbar" id="levelbar"><span>Nivel 1</span><span>Nivel 2</span><span>Nivel 3</span></div>
+
+<div id="maze" role="grid" aria-label="Labirint cu săgeți"></div>
+<button id="startBtn" type="button">Start</button>
+<p id="info" role="status" aria-live="polite"></p>
+<p id="timer"></p>
+
+<div class="board"><h3>🏆 Cele mai bune timpuri</h3><ol id="leaderboard"></ol></div>
+
+<script>
+const arrows = ["→","↓","←","↑"];
+let level = 0;
+
+const levels = [
+    [["→","→","→","→","↓","→","→","→"],[" "," ","↓"," "," "," ","→","→"],["→","→","→","→","↓"," ","→","→"],["→"," "," "," ","→"," ","↓","→"],["→","↓","→","→","→","→"," "," "],["→"," ","→"," "," ","→","→","→"],["→","→","→"," ","→","→","↓"," "],[" "," ","→","→","→"," ","→","E"]],
+    [["↓"," ","→","→","↓","→","→"," "],["→"," ","↓"," ","↓"," ","→"," "],["→","→","→"," "," ","→","→","→"],["→"," "," "," ","→"," ","↓","→"],["→","↓","→","→","→"," ","↓"," "],["→"," ","→"," ","→","→"," ","→"],["→","→","→","→"," ","→","↓"," "],[" "," "," "," "," "," ","→","E"]],
+    [["↓"," ","→"," ","↓"," ","→"," "],["→","↓"," ","→","↓"," ","→"," "],[" ","→","→","→","↓","→"," ","→"],["→"," "," "," ","→"," ","↓","→"],["→","↓","→","→","→"," ","↓","→"],["→"," ","→"," "," ","→","→","→"],["→","→"," ","→","→","→","↓"," "],[" ","→","→","→"," "," ","→","E"]]
+];
+
+let maze, player, visited, startTime, timerInterval, running = false;
+
+function readScores() { try { return JSON.parse(localStorage.getItem("arrowMazeScores") || "[]"); } catch (e) { return []; } }
+function loadLeaderboard() {
+    const best = {};
+    readScores().forEach(s => { if (!(s.level in best) || s.time < best[s.level]) best[s.level] = s.time; });
+    const lb = document.getElementById("leaderboard");
+    lb.innerHTML = "";
+    const keys = Object.keys(best).sort();
+    if (!keys.length) { lb.innerHTML = "<li>Încă niciun timp. Fii primul!</li>"; return; }
+    keys.forEach(k => { const li = document.createElement("li"); li.textContent = `Nivel ${+k + 1}: ${best[k]} sec`; lb.appendChild(li); });
+}
+function saveScore(lv, time) {
+    const s = readScores(); s.push({ level: lv, time, date: new Date().toISOString() });
+    try { localStorage.setItem("arrowMazeScores", JSON.stringify(s)); } catch (e) {}
+    loadLeaderboard();
+}
+
+function setInfo(t, c) { const i = document.getElementById("info"); i.textContent = t; i.style.color = c || "#231B33"; }
+
+function initMaze() {
+    maze = JSON.parse(JSON.stringify(levels[level]));
+    player = { x: 0, y: 0 }; visited = []; running = false;
+    document.getElementById("startBtn").disabled = false;
+    document.querySelectorAll("#levelbar span").forEach((s, i) => s.classList.toggle("on", i === level));
+    draw();
+    document.getElementById("timer").innerText = "";
+}
+
+function draw() {
+    const m = document.getElementById("maze");
+    m.innerHTML = "";
+    for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) {
+        const cell = maze[y][x], d = document.createElement("div");
+        d.className = "cell";
+        if (cell === " ") d.classList.add("wall");
+        if (cell === "L") d.classList.add("loop");
+        if (cell === "E") d.classList.add("exit");
+        if (x === 0 && y === 0) d.classList.add("start");
+        if (player.x === x && player.y === y) d.classList.add("player");
+        d.textContent = cell === "L" ? "" : (cell === "E" ? "🏁" : cell);
+        if (cell !== " " && cell !== "E" && cell !== "L") {
+            d.setAttribute("role", "button"); d.tabIndex = 0;
+            d.onclick = () => rotate(x, y);
+            d.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); rotate(x, y); } };
+        }
+        m.appendChild(d);
+    }
+}
+
+function rotate(x, y) {
+    if (running) return;
+    const i = arrows.indexOf(maze[y][x]);
+    maze[y][x] = arrows[(i + 1) % 4];
+    draw();
+    const again = document.querySelector(`#maze .cell:nth-child(${y * 8 + x + 1})`);
+    if (again) again.focus({ preventScroll: true });
+}
+
+function start() {
+    if (running) return;
+    running = true; visited = [];
+    document.getElementById("startBtn").disabled = true;
+    setInfo("");
+    startTime = Date.now();
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        document.getElementById("timer").innerText = `⏱ ${Math.floor((Date.now() - startTime) / 1000)} sec`;
+    }, 500);
+    move();
+}
+
+function stopRun() { running = false; clearInterval(timerInterval); document.getElementById("startBtn").disabled = false; }
+
+function move() {
+    const key = player.x + "," + player.y;
+    if (visited.includes(key)) {
+        maze[player.y][player.x] = "L";
+        setInfo("Ai intrat într-o buclă! Săgeata devine zid. Schimbă drumul și încearcă din nou.", "#B82A53");
+        draw(); stopRun(); resetPlayerSoon(); return;
+    }
+    visited.push(key);
+    const c = maze[player.y][player.x];
+    if (c === "E") {
+        const time = Math.floor((Date.now() - startTime) / 1000);
+        stopRun();
+        draw();
+        setInfo(`🎉 Nivelul ${level + 1} terminat în ${time} sec!`, "#14937A");
+        saveScore(level, time);
+        level++;
+        if (level >= levels.length) { setInfo("🏆 Bravo! Ai terminat toate nivelurile!", "#14937A"); level = 0; }
+        setTimeout(initMaze, 1800);
+        return;
+    }
+    if (c === " " || c === "L") {
+        setInfo("Ai lovit un zid! Răsucește săgețile și încearcă din nou.", "#B82A53");
+        draw(); stopRun(); resetPlayerSoon(); return;
+    }
+    if (c === "→") player.x++; if (c === "←") player.x--; if (c === "↑") player.y--; if (c === "↓") player.y++;
+    if (player.x < 0 || player.y < 0 || player.x > 7 || player.y > 7) {
+        setInfo("Ai ieșit din labirint! Răsucește săgețile și încearcă din nou.", "#B82A53");
+        player.x = Math.max(0, Math.min(7, player.x)); player.y = Math.max(0, Math.min(7, player.y));
+        draw(); stopRun(); resetPlayerSoon(); return;
+    }
+    draw();
+    setTimeout(move, 350);
+}
+
+/* după o greșeală, punctul revine la start ca să poți încerca iar */
+function resetPlayerSoon() { setTimeout(() => { player = { x: 0, y: 0 }; visited = []; draw(); }, 1200); }
+
+document.getElementById("startBtn").addEventListener("click", start);
+loadLeaderboard();
+initMaze();
+</script>
+<script src="joc.js"></script>
+</body>
+</html>

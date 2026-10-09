@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Piramida Magică Auto-Generată</title>
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --success: #2ecc71;
+            --error: #e74c3c;
+            --bg: #f0f2f5;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .fisa {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            text-align: center;
+            border: 4px solid var(--primary);
+        }
+
+        h1 { color: var(--primary); margin-bottom: 5px; }
+        p { color: #666; margin-bottom: 30px; }
+
+        .pyramid-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .cell {
+            width: 70px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            border-radius: 12px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            border: 2px solid #ddd;
+            transition: all 0.3s;
+        }
+
+        .base-cell {
+            background: #a29bfe;
+            color: white;
+            border-color: #6c5ce7;
+        }
+
+        input {
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            border: none;
+            background: transparent;
+            font-size: 1.4rem;
+            font-weight: bold;
+            outline: none;
+        }
+
+        input.corect { color: var(--success); }
+        .cell.success-bg { border-color: var(--success); background-color: #eafaf1; }
+        
+        input.gresit { color: var(--error); }
+        .cell.error-bg { border-color: var(--error); background-color: #fdedec; animation: shake 0.3s; }
+
+        @keyframes shake {
+            0%, 100% {transform: translateX(0);}
+            25% {transform: translateX(-5px);}
+            75% {transform: translateX(5px);}
+        }
+
+        #next-btn {
+            margin-top: 30px;
+            padding: 12px 25px;
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: none;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+        }
+
+        #next-btn:hover { background: #27ae60; transform: scale(1.05); }
+    </style>
+<meta name="joc-inapoi" content="clasa1.html">
+<link rel="stylesheet" href="joc.css">
+</head>
+<body>
+
+<div class="fisa">
+    <h1>📐 Piramida Infinită</h1>
+    <p>Adună numerele de jos pentru a ajunge în vârf!</p>
+
+    <div id="pyramid" class="pyramid-container">
+        <div class="row">
+            <div class="cell" id="c-1-1"><input type="number" id="in-1-1"></div>
+        </div>
+        <div class="row">
+            <div class="cell" id="c-2-1"><input type="number" id="in-2-1"></div>
+            <div class="cell" id="c-2-2"><input type="number" id="in-2-2"></div>
+        </div>
+        <div class="row">
+            <div class="cell base-cell" id="c-3-1">?</div>
+            <div class="cell base-cell" id="c-3-2">?</div>
+            <div class="cell base-cell" id="c-3-3">?</div>
+        </div>
+    </div>
+
+    <button id="next-btn" onclick="initPyramid()">✨ Joc Nou! ✨</button>
+</div>
+
+
+
+<script>
+    let pyramidData = {};
+
+    function initPyramid() {
+        // Resetare UI
+        document.getElementById('next-btn').style.display = 'none';
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.value = '';
+            input.disabled = false;
+            input.parentElement.classList.remove('success-bg', 'error-bg');
+            input.classList.remove('corect', 'gresit');
+        });
+
+        // 1. Generăm 3 numere la bază
+        const b1 = Math.floor(Math.random() * 9) + 1;
+        const b2 = Math.floor(Math.random() * 9) + 1;
+        const b3 = Math.floor(Math.random() * 9) + 1;
+
+        // 2. Calculăm soluțiile
+        const m1 = b1 + b2; // Mijloc stânga
+        const m2 = b2 + b3; // Mijloc dreapta
+        const v1 = m1 + m2; // Vârf
+
+        pyramidData = {
+            "in-3-1": b1, "in-3-2": b2, "in-3-3": b3,
+            "in-2-1": m1, "in-2-2": m2,
+            "in-1-1": v1
+        };
+
+        // 3. Afișăm baza
+        document.getElementById('c-3-1').innerText = b1;
+        document.getElementById('c-3-2').innerText = b2;
+        document.getElementById('c-3-3').innerText = b3;
+    }
+
+    document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', function() {
+            const id = this.id;
+            const userVal = parseInt(this.value);
+            const correctVal = pyramidData[id];
+
+            if (isNaN(userVal)) return;
+
+            if (userVal === correctVal) {
+                this.classList.add('corect');
+                this.parentElement.classList.add('success-bg');
+                this.disabled = true;
+                checkWin();
+            } else if (this.value.length >= correctVal.toString().length) {
+                this.classList.add('gresit');
+                this.parentElement.classList.add('error-bg');
+                setTimeout(() => {
+                    this.value = '';
+                    this.classList.remove('gresit');
+                    this.parentElement.classList.remove('error-bg');
+                }, 1500);
+            }
+        });
+    });
+
+    function checkWin() {
+        const correctOnes = document.querySelectorAll('input.corect').length;
+        if (correctOnes === 3) { // Avem 3 input-uri de completat
+            document.getElementById('next-btn').style.display = 'inline-block';
+        }
+    }
+
+    // Pornim prima piramidă
+    initPyramid();
+</script>
+
+<script src="joc.js"></script>
+</body>
+</html>

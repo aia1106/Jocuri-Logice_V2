@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Exerciții – Jocuri Logice</title>
+<link rel="icon" href="LOGO.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="stil.css">
+<meta charset="UTF-8">
+    
+    
+    
+
+<body>
+    <header>
+        <h1>Jocuri Logice</h1>
+	<h2>„Gândim jucându-ne, învățăm zâmbind!”</h2>
+        <nav>
+            <button class="menu-btn">☰</button>
+            <ul class="menu">
+                <li><a href="index.html">Acasă</a></li>
+		<li><a href="clasa0.html">Clasa 0</a></li>
+                <li><a href="clasa1.html">Clasa I</a></li>
+                <li><a href="clasa2.html">Clasa a II-a</a></li>
+                <li><a href="clasa3.html">Clasa a III-a</a></li>
+                <li><a href="clasa4.html">Clasa a IV-a</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+<body>
+
+  <style>
+    body {
+      font-family: 'Comic Sans MS', sans-serif;
+      text-align: center;
+      background-color: #f0f8ff;
+      padding:px;
+    }
+    .question {
+      font-size: 24px;
+      margin: 20px 0 10px;
+    }
+    .circle-container {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      min-height: 80px;
+    }
+    .circle {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background-color: #4CAF50;
+      position: relative;
+    }
+    .circle.x::before, .circle.x::after {
+      content: '';
+      position: absolute;
+      width: 4px;
+      height: 60px;
+      background-color: red;
+      top: 0;
+      left: 28px;
+    }
+    .circle.x::before {
+      transform: rotate(45deg);
+    }
+    .circle.x::after {
+      transform: rotate(-45deg);
+    }
+    .input-area {
+      margin-top: 10px;
+    }
+    input[type="number"] {
+      padding: 8px;
+      font-size: 18px;
+      width: 80px;
+      text-align: center;
+    }
+    button {
+      padding: 8px 15px;
+      font-size: 16px;
+      margin: 5px;
+      background-color: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .result {
+      margin-top: 15px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .exercise-buttons {
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+<a class="skip-link" href="#continut">Sari la conținut</a>
+<header class="site-header">
+    <div class="header-top">
+        <a class="brand" href="index.html" aria-label="Jocuri Logice – pagina principală">
+            <img src="logo-palat.png" alt="" class="header-logo" width="113" height="38">
+            <span class="brand-text"><span class="site-name">Jocuri Logice</span></span>
+        </a>
+        <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="meniu"><span class="menu-icon" aria-hidden="true">☰</span><span>Meniu</span></button>
+    </div>
+    <nav aria-label="Navigare principală"><ul class="menu" id="meniu"><li><a href="index.html">Acasă</a></li><li><a href="clasa0.html">Clasa 0</a></li><li><a href="clasa1.html">Clasa I</a></li><li><a href="clasa2.html">Clasa a II-a</a></li><li><a href="clasa3.html">Clasa a III-a</a></li><li><a href="clasa4.html">Clasa a IV-a</a></li><li><a href="jocuri.html">Jocuri</a></li><li><a href="concurs.html">Concurs</a></li><li><a href="info.html">Informații</a></li><li><a href="resursedidactice.html">Resurse</a></li><li><a href="contact.html">Contact</a></li></ul></nav>
+</header>
+<main id="continut" class="legacy">
+<h2>Exerciții cu scădere </h2>
+
+  <div class="exercise-buttons">
+    <button onclick="loadExercise(0)">9 - 2</button>
+    <button onclick="loadExercise(1)">7 - 4</button>
+    <button onclick="loadExercise(2)">6 - 2</button>
+    <button onclick="loadExercise(3)">9 - 1</button>
+    <button onclick="loadExercise(4)">5 - 4</button>
+    <button onclick="loadExercise(5)">3 - 2</button>
+    <button onclick="loadExercise(6)">6 - 5</button>
+    <button onclick="loadExercise(7)">5 - 2</button>
+  </div>
+
+  <div class="question" id="exerciseTitle"></div>
+  <div class="circle-container" id="circleContainer"></div>
+
+  <div class="input-area">
+    <input type="number" id="answerInput" placeholder="Răspunsul tău">
+    <button onclick="checkAnswer()">Verifică</button>
+  </div>
+
+  <div id="result" class="result"></div>
+
+  <script>
+    const exercises = [
+      { total: 9, minus: 2 },
+      { total: 7, minus: 4 },
+      { total: 6, minus: 2 },
+      { total: 9, minus: 1 },
+      { total: 5, minus: 4 },
+      { total: 3, minus: 2 },
+      { total: 6, minus: 5 },
+      { total: 5, minus: 2 }
+
+    ];
+
+    let currentExercise = 0;
+
+    function loadExercise(index) {
+      currentExercise = index;
+      const ex = exercises[index];
+      const title = `${ex.total} - ${ex.minus} = ?`;
+      document.getElementById('exerciseTitle').textContent = title;
+
+      const container = document.getElementById('circleContainer');
+      container.innerHTML = '';
+
+      for (let i = 0; i < ex.total; i++) {
+        const circle = document.createElement('div');
+        circle.className = 'circle';
+        if (i >= ex.total - ex.minus) {
+          circle.classList.add('x');
+        }
+        container.appendChild(circle);
+      }
+
+      document.getElementById('answerInput').value = '';
+      document.getElementById('result').textContent = '';
+    }
+
+    function checkAnswer() {
+      const input = parseInt(document.getElementById('answerInput').value);
+      const expected = exercises[currentExercise].total - exercises[currentExercise].minus;
+      const result = document.getElementById('result');
+
+      if (input === expected) {
+        result.style.color = 'green';
+        result.textContent = 'Corect! Bravo!';
+      } else {
+        result.style.color = 'red';
+        result.textContent = 'Nu e corect. Încearcă din nou!';
+      }
+    }
+
+    // Încarcă primul exercițiu la pornire
+    window.onload = () => loadExercise(0);
+  </script>
+</main>
+<footer class="site-footer">
+    <img src="LOGO.png" alt="Sigla Cercului de Jocuri Logice" class="footer-logo" width="56" height="56" loading="lazy">
+    <p>&copy; 2025 Cercul de Jocuri Logice – Palatul Copiilor Arad</p>
+</footer>
+<script src="meniu.js"></script>
+</body>
+</html>

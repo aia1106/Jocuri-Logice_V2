@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Exerciții – Jocuri Logice</title>
+<link rel="icon" href="LOGO.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="stil.css">
+<meta charset="UTF-8">
+</head>
+<body>
+<a class="skip-link" href="#continut">Sari la conținut</a>
+<header class="site-header">
+    <div class="header-top">
+        <a class="brand" href="index.html" aria-label="Jocuri Logice – pagina principală">
+            <img src="logo-palat.png" alt="" class="header-logo" width="113" height="38">
+            <span class="brand-text"><span class="site-name">Jocuri Logice</span></span>
+        </a>
+        <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="meniu"><span class="menu-icon" aria-hidden="true">☰</span><span>Meniu</span></button>
+    </div>
+    <nav aria-label="Navigare principală"><ul class="menu" id="meniu"><li><a href="index.html">Acasă</a></li><li><a href="clasa0.html">Clasa 0</a></li><li><a href="clasa1.html">Clasa I</a></li><li><a href="clasa2.html">Clasa a II-a</a></li><li><a href="clasa3.html">Clasa a III-a</a></li><li><a href="clasa4.html">Clasa a IV-a</a></li><li><a href="jocuri.html">Jocuri</a></li><li><a href="concurs.html">Concurs</a></li><li><a href="info.html">Informații</a></li><li><a href="resursedidactice.html">Resurse</a></li><li><a href="contact.html">Contact</a></li></ul></nav>
+</header>
+<main id="continut" class="legacy">
+<style>
+ 
+ #exercisesContainer {
+    font-family: 'Comic Sans MS', cursive, sans-serif; /* sau orice alt font preferi */
+    font-size: 50px; /* mărime text exerciții */
+  }
+
+  #exercisesContainer input {
+    font-size: 50px; /* mărime text în câmpul de răspuns */
+    font-family: 'Comic Sans MS', cursive, sans-serif;
+    padding: 8px;
+    border-radius: 8px;
+    width: 80px;
+    text-align: center;
+  }
+</style>
+
+
+    
+
+
+<button id="back-button" onclick="history.back()">⬅ Înapoi</button>
+<h2>Exerciții cu rezultat maxim 10</h2>
+<div id="exercisesContainer"></div>
+
+<script>
+  const exercises = [
+    { a: 1, b: 1 },
+    { a: 2, b: 3 },
+    { a: 4, b: 5 },
+    { a: 6, b: 2 },
+    { a: 9, b: 1 },
+    { a: 3, b: 3 },
+    { a: 5, b: 4 },
+    { a: 7, b: 2 },
+    { a: 8, b: 2 },
+    { a: 10, b: 0 }
+  ];
+
+  let current = 0;
+  const container = document.getElementById("exercisesContainer");
+
+  function showNextExercise() {
+    const ex = exercises[current];
+    const div = document.createElement("div");
+    const label = document.createElement("span");
+    label.textContent = ` ${ex.a} + ${ex.b} = `;
+
+    const input = document.createElement("input");
+    input.type = "number";
+
+    input.addEventListener("change", () => {
+      const userAnswer = parseInt(input.value);
+      const correctAnswer = ex.a + ex.b;
+
+      if (userAnswer === correctAnswer) {
+        input.style.backgroundColor = "lightgreen";
+        input.disabled = true;
+        current++;
+        if (current < exercises.length) {
+          showNextExercise();
+        } else {
+          const done = document.createElement("p");
+          done.textContent = "Felicitări! Ai terminat toate exercițiile.";
+          container.appendChild(done);
+        }
+      } else {
+        input.style.backgroundColor = "lightcoral";
+      }
+    });
+
+    div.appendChild(label);
+    div.appendChild(input);
+    container.appendChild(div);
+    input.focus();
+  }
+
+  showNextExercise();
+</script>
+</main>
+<footer class="site-footer">
+    <img src="LOGO.png" alt="Sigla Cercului de Jocuri Logice" class="footer-logo" width="56" height="56" loading="lazy">
+    <p>&copy; 2025 Cercul de Jocuri Logice – Palatul Copiilor Arad</p>
+</footer>
+<script src="meniu.js"></script>
+</body>
+</html>

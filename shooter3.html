@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta charset="UTF-8">
+    <title>Neon Multi-Sniper V3</title>
+    <style>
+        body { margin: 0; background: #010105; color: #fff; font-family: 'Segoe UI', sans-serif; overflow: hidden; cursor: crosshair; }
+        #ui { 
+            position: absolute; 
+            top: 20px; 
+            width: 100%; 
+            display: flex; 
+            justify-content: space-around; 
+            font-size: 28px; 
+            font-weight: bold;
+            pointer-events: none; 
+            z-index: 10;
+        }
+        .neon-blue { text-shadow: 0 0 10px #0ff, 0 0 20px #0ff; color: #0ff; }
+        .neon-pink { text-shadow: 0 0 10px #f0f, 0 0 20px #f0f; color: #f0f; }
+        #aim { 
+            position: absolute; 
+            width: 44px; height: 44px; 
+            border: 2px solid #0f0; 
+            border-radius: 50%; 
+            pointer-events: none; 
+            transform: translate(-50%, -50%); 
+            box-shadow: 0 0 15px #0f0;
+        }
+        #aim::before, #aim::after {
+            content: ''; position: absolute; background: #0f0;
+        }
+        #aim::before { width: 10px; height: 2px; top: 50%; left: -15px; }
+        #aim::after { width: 2px; height: 10px; top: -15px; left: 50%; }
+    </style>
+<meta name="joc-inapoi" content="clasa2.html">
+<link rel="stylesheet" href="joc.css">
+</head>
+<body>
+
+<div id="ui">
+    <div class="neon-blue">SCOR: <span id="score">0</span></div>
+    <div id="quest" class="neon-pink">ȚINTEȘTE REZULTATUL: <span id="problem">...</span></div>
+</div>
+<div id="aim"></div>
+<canvas id="game"></canvas>
+
+<script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let score = 0;
+    let targetNum = 0;
+    let targets = [];
+    const neonColors = ['#0ff', '#f0f', '#0f0', '#ff0', '#fff', '#f00'];
+
+    class Target {
+        constructor(val, isCorrect) {
+            this.val = val;
+            this.r = 45;
+            this.x = Math.random() * (canvas.width - this.r * 2) + this.r;
+            this.y = Math.random() * (canvas.height - this.r * 2) + this.r;
+            
+            // VITEZA MĂRITĂ la 2.5 pentru un shooter real
+            this.speed = 2.5; 
+            this.dir = Math.random() * Math.PI * 2;
+            this.isCorrect = isCorrect;
+            
+            // Culoare aleatorie indiferent dacă e corect sau nu
+            this.color = neonColors[Math.floor(Math.random() * neonColors.length)];
+        }
+
+        draw() {
+            ctx.save();
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = this.color;
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = 3;
+            
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.fillStyle = "#fff";
+            ctx.font = "bold 24px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(this.val, this.x, this.y);
+            ctx.restore();
+        }
+
+        update() {
+            this.x += Math.cos(this.dir) * this.speed;
+            this.y += Math.sin(this.dir) * this.speed;
+
+            if(this.x < this.r || this.x > canvas.width - this.r) this.dir = Math.PI - this.dir;
+            if(this.y < this.r || this.y > canvas.height - this.r) this.dir = -this.dir;
+        }
+    }
+
+    function newProblem() {
+        let a = Math.floor(Math.random() * 8) + 2;
+        let b = Math.floor(Math.random() * 8) + 2;
+        targetNum = a * b;
+        document.getElementById('problem').innerText = `${a} x ${b}`;
+        
+        targets = [];
+        // 1 corect
+        targets.push(new Target(targetNum, true));
+        
+        // 4 greșite pentru a umple ecranul
+        for(let i=0; i<4; i++) {
+            let wrongVal;
+            do {
+                wrongVal = Math.floor(Math.random() * 80) + 4;
+            } while (wrongVal === targetNum);
+            targets.push(new Target(wrongVal, false));
+        }
+    }
+
+    canvas.onclick = (e) => {
+        for (let i = targets.length - 1; i >= 0; i--) {
+            let t = targets[i];
+            let d = Math.hypot(e.clientX - t.x, e.clientY - t.y);
+            if(d < t.r) {
+                if(t.isCorrect) {
+                    score += 10;
+                    document.getElementById('score').innerText = score;
+                    newProblem();
+                } else {
+                    score = Math.max(0, score - 5);
+                    document.getElementById('score').innerText = score;
+                    targets.splice(i, 1); // Eliminăm ținta greșită la click
+                }
+                break; 
+            }
+        }
+    };
+
+    window.onmousemove = (e) => {
+        const aim = document.getElementById('aim');
+        aim.style.left = e.clientX + 'px';
+        aim.style.top = e.clientY + 'px';
+    };
+
+    function loop() {
+        ctx.fillStyle = "rgba(1, 1, 5, 0.2)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        targets.forEach(t => { 
+            t.update(); 
+            t.draw(); 
+        });
+        requestAnimationFrame(loop);
+    }
+
+    newProblem();
+    loop();
+
+    window.onresize = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    };
+</script>
+<script src="joc.js"></script>
+</body>
+</html>

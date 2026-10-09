@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Joc Matematică</title>
+
+<style>
+body{
+    margin:0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg,#ff9a9e,#fad0c4);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    overflow:hidden;
+}
+
+.game{
+    background:white;
+    width:90%;
+    max-width:500px;
+    padding:30px;
+    border-radius:30px;
+    text-align:center;
+    box-shadow:0 20px 40px rgba(0,0,0,0.3);
+}
+
+h1{
+    margin-top:0;
+}
+
+.score{
+    font-size:22px;
+    margin-bottom:10px;
+}
+
+.lives{
+    font-size:22px;
+    margin-bottom:15px;
+}
+
+.question{
+    font-size:40px;
+    margin:20px 0;
+    transition:0.3s;
+}
+
+input{
+    width:120px;
+    font-size:28px;
+    padding:10px;
+    border-radius:15px;
+    border:3px solid #ccc;
+    text-align:center;
+}
+
+button{
+    margin-top:15px;
+    padding:10px 25px;
+    font-size:18px;
+    border:none;
+    border-radius:20px;
+    background:#ff7675;
+    color:white;
+    cursor:pointer;
+}
+
+.correct{
+    background:#55efc4 !important;
+}
+
+.wrong{
+    background:#ff7675 !important;
+}
+
+.big{
+    animation:pop 0.3s ease;
+}
+
+@keyframes pop{
+    0%{transform:scale(1)}
+    50%{transform:scale(1.2)}
+    100%{transform:scale(1)}
+}
+</style>
+<meta name="joc-inapoi" content="clasa0.html">
+<link rel="stylesheet" href="joc.css">
+</head>
+
+<body>
+
+<div class="game">
+    <h1>🎯 Joc Matematică</h1>
+    <div class="score">Scor: <span id="score">0</span></div>
+    <div class="lives">Vieți: <span id="lives">❤️❤️❤️</span></div>
+    <div class="question" id="question"></div>
+    <input type="number" id="answer" min="0" max="10">
+    <br>
+    <button onclick="check()">Răspunde</button>
+</div>
+
+<script>
+
+let score=0;
+let lives=3;
+let correctAnswer=0;
+
+function newQuestion(){
+    let a=Math.floor(Math.random()*6);
+    let b=Math.floor(Math.random()*6);
+    let op=Math.random()>0.5?"+":"-";
+
+    if(op==="+" && a+b>10) b=10-a;
+    if(op==="-" && a-b<0)[a,b]=[b,a];
+
+    correctAnswer = op==="+"? a+b : a-b;
+    document.getElementById("question").innerHTML=`${a} ${op} ${b} = ?`;
+    document.getElementById("answer").value="";
+}
+
+function check(){
+    let value=parseInt(document.getElementById("answer").value);
+    let q=document.getElementById("question");
+
+    if(value===correctAnswer){
+        score++;
+        document.getElementById("score").innerText=score;
+        q.classList.add("big");
+        setTimeout(()=>q.classList.remove("big"),300);
+        document.body.style.background="linear-gradient(135deg,#a1ffce,#faffd1)";
+    }else{
+        lives--;
+        document.getElementById("lives").innerText="❤️".repeat(lives);
+        document.body.style.background="linear-gradient(135deg,#ff9a9e,#fad0c4)";
+    }
+
+    if(lives===0){
+        alert("Game Over! Scor final: "+score);
+        score=0;
+        lives=3;
+        document.getElementById("score").innerText=0;
+        document.getElementById("lives").innerText="❤️❤️❤️";
+    }
+
+    newQuestion();
+}
+
+newQuestion();
+
+</script>
+
+<script src="joc.js"></script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Jocuri logice și arcade pentru elevii claselor 0–IV. Cercul de Jocuri Logice, Palatul Copiilor Arad.">
+    <meta name="theme-color" content="#FFFFFF">
+    <title>Jocuri Logice – Palatul Copiilor Arad</title>
+    <link rel="icon" href="LOGO.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="stil.css">
+</head>
+<body>
+<a class="skip-link" href="#continut">Sari la conținut</a>
+<header class="site-header">
+    <div class="header-top">
+        <a class="brand" href="index.html" aria-label="Jocuri Logice – pagina principală">
+            <img src="logo-palat.png" alt="" class="header-logo" width="113" height="38">
+            <span class="brand-text"><span class="site-name">Jocuri Logice</span></span>
+        </a>
+        <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="meniu"><span class="menu-icon" aria-hidden="true">☰</span><span>Meniu</span></button>
+    </div>
+    <nav aria-label="Navigare principală"><ul class="menu" id="meniu"><li><a href="index.html" aria-current="page">Acasă</a></li><li><a href="clasa0.html">Clasa 0</a></li><li><a href="clasa1.html">Clasa I</a></li><li><a href="clasa2.html">Clasa a II-a</a></li><li><a href="clasa3.html">Clasa a III-a</a></li><li><a href="clasa4.html">Clasa a IV-a</a></li><li><a href="jocuri.html">Jocuri</a></li><li><a href="concurs.html">Concurs</a></li><li><a href="info.html">Informații</a></li><li><a href="resursedidactice.html">Resurse</a></li><li><a href="contact.html">Contact</a></li></ul></nav>
+</header>
+<main id="continut">
+    <section class="hero">
+        <div class="hero-copy">
+            <p class="motto">„Gândim jucându-ne, învățăm zâmbind!”</p>
+            <h1>Bine ai venit în lumea jocurilor logice</h1>
+            <p class="hero-text">Aici copiii descoperă distracția și provocările gândirii logice, matematice și creative. Jocurile ajută la exersarea atenției, a concentrării și a îndemânării, dar și la relaxare.</p>
+            <div class="hero-actions"><a class="btn btn-berry" href="jocuri.html">Joacă acum</a><a class="btn btn-ghost" href="#alege-clasa">Alege clasa</a></div>
+        </div>
+        <svg class="hero-art" viewBox="0 0 340 320" role="img" aria-label="Piese colorate de joc: cerc, pătrat, triunghi și semicerc">
+            <rect x="26" y="34" width="124" height="124" rx="32" fill="#E23B6B" transform="rotate(-8 88 96)"/>
+            <circle cx="232" cy="96" r="76" fill="#FFB81C"/>
+            <polygon points="24,302 156,170 156,302" fill="#1FBF9A"/>
+            <path d="M176 302 a72 72 0 0 1 144 0 z" fill="#4A2370"/>
+            <circle cx="156" cy="164" r="20" fill="#E8541F"/>
+        </svg>
+    </section>
+    <section class="class-picker" aria-labelledby="alege-clasa"><h2 id="alege-clasa">Alege clasa</h2><ul class="tiles"><li><a class="tile tile-0" href="clasa0.html"><span class="tile-num">0</span><span class="tile-label">Clasa pregătitoare</span></a></li><li><a class="tile tile-1" href="clasa1.html"><span class="tile-num">I</span><span class="tile-label">Clasa I</span></a></li><li><a class="tile tile-2" href="clasa2.html"><span class="tile-num">II</span><span class="tile-label">Clasa a II-a</span></a></li><li><a class="tile tile-3" href="clasa3.html"><span class="tile-num">III</span><span class="tile-label">Clasa a III-a</span></a></li><li><a class="tile tile-4" href="clasa4.html"><span class="tile-num">IV</span><span class="tile-label">Clasa a IV-a</span></a></li></ul></section>
+    <section class="arcade-banner" aria-labelledby="arcade-titlu">
+        <div><h2 id="arcade-titlu">Jocuri de atenție și relaxare</h2><p>Prinde, ocolește, țintește și respiră liniștit. Jocuri scurte, pentru telefon, tabletă sau calculator.</p></div>
+        <a class="btn btn-sun" href="jocuri.html">Vezi jocurile</a>
+    </section>
+    <section class="more" aria-label="Mai multe"><a class="more-link" href="de_ce.html">De ce jocurile logice?</a><a class="more-link" href="ce_oferim.html">Ce oferim</a><a class="more-link" href="concurs.html">Concurs</a></section>
+</main>
+<footer class="site-footer">
+    <img src="LOGO.png" alt="Sigla Cercului de Jocuri Logice" class="footer-logo" width="56" height="56" loading="lazy">
+    <p>&copy; 2025 Cercul de Jocuri Logice – Palatul Copiilor Arad</p>
+</footer>
+<script src="meniu.js"></script>
+</body>
+</html>

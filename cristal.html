@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta charset="UTF-8">
+    <title>Math Alchemist - Crystal Lab Pro</title>
+    <style>
+        :root {
+            --cyan: #00f2ff;
+            --purple: #7d2ae8;
+            --pink: #ff00c8;
+            --gold: #ffcc00;
+            --bg: #050510;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg);
+            background: radial-gradient(circle at center, #101035 0%, #050510 100%);
+            color: white;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            background: url('https://www.transparenttextures.com/patterns/stardust.png');
+            opacity: 0.3;
+        }
+
+        #game-container {
+            position: relative;
+            width: 90%;
+            max-width: 480px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 40px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        /* HUD Scor */
+        .score-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .score-val { color: var(--gold); font-weight: bold; font-size: 1.1rem; }
+        .high-val { color: var(--cyan); opacity: 0.8; }
+
+        /* Target HUD */
+        .target-hud { margin-bottom: 25px; }
+        .target-label { font-size: 0.7rem; letter-spacing: 4px; color: var(--cyan); text-transform: uppercase; margin-bottom: 8px; opacity: 0.7; }
+
+        .target-circle {
+            width: 110px;
+            height: 110px;
+            margin: 0 auto;
+            border: 3px solid var(--cyan);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.2rem;
+            font-weight: 900;
+            text-shadow: 0 0 20px var(--cyan);
+            background: rgba(0, 242, 255, 0.05);
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 10px var(--cyan); }
+            50% { transform: scale(1.05); box-shadow: 0 0 25px var(--purple); border-color: var(--purple); }
+        }
+
+        /* Panel Calcul */
+        .display-panel {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #formula-text { font-size: 1rem; color: #888; min-height: 1.4rem; margin-bottom: 5px; }
+        #live-result { font-size: 2.4rem; font-weight: bold; color: var(--gold); transition: 0.3s; }
+
+        /* Grid */
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
+
+        .btn-crystal {
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+            font-size: 1.4rem;
+            font-weight: bold;
+            height: 60px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.15);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-crystal:hover:not(:disabled) { background: var(--cyan); color: #000; transform: translateY(-3px); }
+        .btn-crystal:disabled { opacity: 0.1; cursor: not-allowed; }
+
+        .btn-op {
+            background: linear-gradient(135deg, var(--purple), var(--pink));
+            color: white;
+            height: 50px;
+            border-radius: 12px;
+            font-size: 1.3rem;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-reset {
+            grid-column: span 4;
+            background: none;
+            border: 1px solid rgba(255, 75, 43, 0.5);
+            color: #ff4b2b;
+            padding: 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        /* Success Overlay */
+        #success-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 5, 16, 0.95);
+            border-radius: 40px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .pulse-score { animation: score-pop 0.5s ease-out; }
+        @keyframes score-pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); color: var(--success); }
+            100% { transform: scale(1); }
+        }
+    </style>
+<meta name="joc-inapoi" content="clasa3.html">
+<link rel="stylesheet" href="joc.css">
+</head>
+<body>
+
+<div class="stars"></div>
+
+<div id="game-container">
+    <div id="success-overlay">
+        <div style="font-size: 60px; margin-bottom: 10px;">🌟</div>
+        <h2 style="color: var(--cyan); margin: 0;">CRISTAL ACTIVAT!</h2>
+        <p style="color: var(--gold);">+20 PUNCTE</p>
+    </div>
+
+    <div class="score-row">
+        <div>SCOR: <span id="score" class="score-val">0</span></div>
+        <div>RECORD: <span id="high-score" class="high-val">0</span></div>
+    </div>
+
+    <div class="target-hud">
+        <div class="target-label">Frecvența Necesară</div>
+        <div class="target-circle" id="target-val">--</div>
+    </div>
+
+    <div class="display-panel">
+        <div id="formula-text">---</div>
+        <div id="live-result">0</div>
+    </div>
+
+    <div class="grid" id="num-grid"></div>
+
+    <div class="grid">
+        <button class="btn-op" onclick="addOp('+')">+</button>
+        <button class="btn-op" onclick="addOp('-')">−</button>
+        <button class="btn-op" onclick="addOp('*')">×</button>
+        <button class="btn-op" onclick="addOp('/')">÷</button>
+    </div>
+
+    <button class="btn-reset" onclick="resetCurrent()">Resetează Formula</button>
+</div>
+
+<script>
+    let score = 0;
+    let highScore = localStorage.getItem('crystalHS') || 0;
+    let target = 0;
+    let formula = [];
+    let numbers = [];
+
+    document.getElementById('high-score').innerText = highScore;
+
+    function initGame() {
+        formula = [];
+        // Garantăm un rezultat între 5 și 60 pentru a fi ușor de compus
+        let n1 = Math.floor(Math.random() * 8) + 2;
+        let n2 = Math.floor(Math.random() * 8) + 2;
+        let n3 = Math.floor(Math.random() * 4) + 2;
+        
+        numbers = [n1, n2, n3, Math.floor(Math.random() * 9) + 1];
+        numbers.sort(() => Math.random() - 0.5);
+
+        // Algoritm pre-calculare soluție
+        let ops = ['+', '-', '*'];
+        let op1 = ops[Math.floor(Math.random() * ops.length)];
+        let op2 = ops[Math.floor(Math.random() * ops.length)];
+        
+        try {
+            target = Math.abs(eval(`(${n1}${op1}${n2})${op2}${n3}`));
+            if (target === 0 || target > 99) target = n1 + n2 + n3;
+        } catch(e) { target = 30; }
+
+        document.getElementById('target-val').innerText = target;
+        renderNumbers();
+        updateUI();
+    }
+
+    function renderNumbers() {
+        const grid = document.getElementById('num-grid');
+        grid.innerHTML = '';
+        numbers.forEach((n, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-crystal';
+            btn.innerText = n;
+            btn.id = `btn-${i}`;
+            btn.onclick = () => {
+                if(formula.length > 0 && typeof formula[formula.length-1] === 'number') return;
+                formula.push(n);
+                btn.disabled = true;
+                updateUI();
+                checkResult();
+            };
+            grid.appendChild(btn);
+        });
+    }
+
+    function addOp(op) {
+        if(formula.length === 0 || typeof formula[formula.length-1] !== 'number') return;
+        formula.push(op);
+        updateUI();
+    }
+
+    function updateUI() {
+        const fText = document.getElementById('formula-text');
+        const lRes = document.getElementById('live-result');
+        
+        fText.innerText = formula.map(x => x === '*' ? '×' : (x === '/' ? '÷' : x)).join(' ') || "Așteptare cristale...";
+        
+        let current = 0;
+        if(formula.length > 0) {
+            let temp = [...formula];
+            if(typeof temp[temp.length-1] !== 'number') temp.pop();
+            try { current = Math.floor(eval(temp.join(''))); } catch(e) { current = 0; }
+        }
+        lRes.innerText = current;
+        lRes.style.color = (current === target && formula.length >= 3) ? 'var(--cyan)' : 'var(--gold)';
+    }
+
+    function checkResult() {
+        let current = 0;
+        let temp = [...formula];
+        if(typeof temp[temp.length-1] !== 'number') return;
+        try { current = eval(temp.join('')); } catch(e) { return; }
+
+        if(current === target && formula.length >= 3) {
+            // Logica de Scor
+            score += 20;
+            document.getElementById('score').innerText = score;
+            document.getElementById('score').classList.add('pulse-score');
+            setTimeout(() => document.getElementById('score').classList.remove('pulse-score'), 500);
+
+            if(score > highScore) {
+                highScore = score;
+                localStorage.setItem('crystalHS', highScore);
+                document.getElementById('high-score').innerText = highScore;
+            }
+
+            // Overlay Succes
+            const overlay = document.getElementById('success-overlay');
+            overlay.style.display = 'flex';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                initGame();
+            }, 1500);
+        }
+    }
+
+    function resetCurrent() {
+        formula = [];
+        renderNumbers();
+        updateUI();
+    }
+
+    initGame();
+</script>
+
+<script src="joc.js"></script>
+</body>
+</html>

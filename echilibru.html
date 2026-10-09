@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="joc-inapoi" content="clasa0.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="icon" href="LOGO.png">
+<link rel="stylesheet" href="joc.css">
+<title>Bounce – Jocuri Logice</title>
+<style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #2A1450; overflow: hidden; touch-action: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: #fff; }
+    #gameArea { position: relative; width: min(95vw, 600px); height: min(76dvh, 760px); background: linear-gradient(#BFE8FF 0%, #E6D9FF 100%); border-radius: 28px; overflow: hidden; box-shadow: 0 18px 40px -16px rgba(0,0,0,.6); }
+    #platform { position: absolute; bottom: 15%; height: 16px; background: #4A2370; border-radius: 10px; transition: width .3s, background .3s; }
+    #ball { position: absolute; background: radial-gradient(circle at 35% 30%, #FF8FAE, #E23B6B 60%, #B82A53); border-radius: 50%; z-index: 5; transition: width .3s, height .3s; will-change: left, top; }
+    #ball.star-mode { background: #FFB81C; clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); border-radius: 0; }
+    #squareObstacle { position: absolute; width: 44px; height: 44px; background: #1FBF9A; top: 45%; left: 50%; transform: translate(-50%, -50%); display: none; border-radius: 12px; transition: background .1s; }
+    #squareObstacle.flash { background: #FFB81C; }
+    .obstacle-long { position: absolute; background: #E8541F; height: 14px; width: 96px; border-radius: 8px; display: none; }
+    .hint { margin: 0; font: 700 1rem var(--j-font-text); color: #D9CCEB; text-align: center; padding: 0 16px; }
+    .jg-hud { position: absolute; }
+</style>
+</head>
+<body class="jg">
+<div id="gameArea">
+    <div class="jg-hud"><span class="jg-pill">⭐ <b id="score">0</b></span><span class="jg-pill">🏆 <b id="best">0</b></span></div>
+    <div id="platform"></div>
+    <div id="ball"></div>
+    <div id="squareObstacle"></div>
+    <div id="obs1" class="obstacle-long" style="top: 30%; left: 10%;"></div>
+    <div id="obs2" class="obstacle-long" style="top: 40%; right: 10%;"></div>
+
+    <div class="jg-overlay" id="startScreen" style="position:absolute">
+        <div class="jg-emoji" id="ovEmoji">🏀</div>
+        <h1 class="jg-title" id="ovTitle">Bounce</h1>
+        <p class="jg-text" id="ovText">Mută platforma cu degetul sau cu mouse-ul și nu lăsa mingea să cadă!</p>
+        <p class="jg-best" id="ovBest"></p>
+        <button class="jg-btn" id="startBtn" type="button">Start</button>
+    </div>
+</div>
+<p class="hint">Trage platforma la stânga și la dreapta</p>
+
+<script>
+let audioCtx = null;
+function initAudio() { try { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+function playSound(freq, type, duration) {
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+    osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(.05, audioCtx.currentTime);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + duration);
+}
+
+const $ = (id) => document.getElementById(id);
+const gameArea = $('gameArea'), platform = $('platform'), ball = $('ball'), scoreEl = $('score'), bestEl = $('best');
+const startScreen = $('startScreen'), squareObs = $('squareObstacle'), longObs = document.querySelectorAll('.obstacle-long');
+
+let best = 0;
+try { best = parseInt(localStorage.getItem('bounce_best') || '0', 10) || 0; } catch (e) {}
+bestEl.textContent = best;
+
+let areaWidth, areaHeight, platformX, ballSize, score = 0, gameOver = false, gameStarted = false, last = 0;
+let ballX, ballY, ballVX, ballVY, jumpForce = -9;
+const gravity = .35;
+
+function initDimensions() {
+    areaWidth = gameArea.clientWidth; areaHeight = gameArea.clientHeight;
+    platformX = (areaWidth - areaWidth * .25) / 2;
+    ballSize = Math.max(22, Math.min(areaWidth * .07, 34));
+    platform.style.width = (areaWidth * .25) + 'px';
+    platform.style.left = platformX + 'px';
+    ball.style.width = ball.style.height = ballSize + 'px';
+}
+
+function resetGame() {
+    initDimensions();
+    score = 0; ballX = areaWidth / 2; ballY = 50; ballVX = areaWidth * .005; ballVY = 2; jumpForce = -9;
+    gameOver = false; gameStarted = false;
+    scoreEl.textContent = '0';
+    ball.classList.remove('star-mode'); platform.style.background = '#4A2370';
+    squareObs.style.display = 'none'; longObs.forEach(o => o.style.display = 'none');
+    startScreen.hidden = false;
+    $('ovBest').textContent = best ? '🏆 Cel mai bun scor: ' + best : '';
+}
+
+function begin() {
+    initAudio();
+    if (gameOver || !gameStarted) { if (gameOver) resetGame(); }
+    startScreen.hidden = true; gameStarted = true; last = performance.now();
+}
+$('startBtn').addEventListener('click', (e) => { e.stopPropagation(); begin(); });
+
+function movePlatform(clientX) {
+    const rect = gameArea.getBoundingClientRect();
+    let x = clientX - rect.left - platform.offsetWidth / 2;
+    platformX = Math.max(0, Math.min(x, areaWidth - platform.offsetWidth));
+    platform.style.left = platformX + 'px';
+}
+gameArea.addEventListener('pointermove', (e) => movePlatform(e.clientX));
+gameArea.addEventListener('pointerdown', (e) => { if (!e.target.closest('.jg-overlay')) movePlatform(e.clientX); });
+window.addEventListener('keydown', (e) => {
+    const step = areaWidth * .06;
+    if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') { platformX = Math.max(0, platformX - step); platform.style.left = platformX + 'px'; }
+    if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') { platformX = Math.min(areaWidth - platform.offsetWidth, platformX + step); platform.style.left = platformX + 'px'; }
+});
+
+function hit(ax, ay, aw, ah, bx, by, bw, bh) { return ax + aw > bx && ax < bx + bw && ay + ah > by && ay < by + bh; }
+
+function update(now) {
+    const dt = Math.min((now - last) / 16.667, 2.5); last = now;
+    if (!gameOver && gameStarted) {
+        ballVY += gravity * dt; ballX += ballVX * dt; ballY += ballVY * dt;
+        if (ballX <= 0 || ballX >= areaWidth - ballSize) {
+            ballVX *= -1; ballX = ballX <= 0 ? 0 : areaWidth - ballSize; playSound(200, 'sine', .1);
+        }
+        if (ballY <= 0) { ballVY *= -.8; ballY = 0; }
+
+        if (score >= 25) {
+            const sl = squareObs.offsetLeft - 22, st = squareObs.offsetTop - 22;
+            if (hit(ballX, ballY, ballSize, ballSize, sl, st, 44, 44)) {
+                ballVY *= -1; playSound(300, 'square', .05);
+                squareObs.classList.add('flash'); setTimeout(() => squareObs.classList.remove('flash'), 300);
+            }
+        }
+        if (score >= 40) longObs.forEach(o => {
+            if (hit(ballX, ballY, ballSize, ballSize, o.offsetLeft, o.offsetTop, o.offsetWidth, o.offsetHeight)) { ballVY *= -1; playSound(400, 'square', .05); }
+        });
+
+        const pTop = platform.offsetTop;
+        if (ballY + ballSize >= pTop && ballY + ballSize <= pTop + 24 && ballX + ballSize > platformX && ballX < platformX + platform.offsetWidth && ballVY > 0) {
+            ballY = pTop - ballSize; ballVY = jumpForce; score++;
+            scoreEl.textContent = score; playSound(600, 'triangle', .1);
+            if (score === 15) { platform.style.width = (platform.offsetWidth * .8) + 'px'; platform.style.background = '#E8541F'; }
+            if (score === 20) jumpForce = -11;
+            if (score === 25) squareObs.style.display = 'block';
+            if (score === 30) { ballVX *= 2; ballSize *= 1.2; ball.style.width = ball.style.height = ballSize + 'px'; }
+            if (score === 40) {
+                ballVX *= .8; ballSize *= 1.2; ball.style.width = ball.style.height = ballSize + 'px';
+                ball.classList.add('star-mode'); platform.style.background = '#6A3BA0';
+                platform.style.width = (platform.offsetWidth * .7) + 'px'; jumpForce = -14;
+                longObs.forEach(o => o.style.display = 'block');
+            }
+            if (score >= 50 && score % 5 === 0) { ballVX *= 1.1; ballVY *= 1.1; }
+        }
+
+        if (ballY > areaHeight) {
+            gameOver = true; playSound(100, 'sawtooth', .4);
+            if (score > best) { best = score; bestEl.textContent = best; try { localStorage.setItem('bounce_best', best); } catch (e) {} }
+            $('ovEmoji').textContent = score >= 25 ? '🌟' : '🏀';
+            $('ovTitle').textContent = score === 0 ? 'Hopa! Aproape!' : 'Ai sărit de ' + score + (score === 1 ? ' dată!' : ' ori!');
+            $('ovText').textContent = 'Mai încearcă, devii tot mai bun!';
+            $('ovBest').textContent = '🏆 Cel mai bun scor: ' + best;
+            $('startBtn').textContent = 'Încă o dată';
+            startScreen.hidden = false;
+        }
+    }
+    ball.style.left = ballX + 'px'; ball.style.top = ballY + 'px';
+    requestAnimationFrame(update);
+}
+
+window.addEventListener('resize', () => { if (!gameStarted) initDimensions(); });
+resetGame();
+requestAnimationFrame((t) => { last = t; update(t); });
+</script>
+<script src="joc.js"></script>
+</body>
+</html>

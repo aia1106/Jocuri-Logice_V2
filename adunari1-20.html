@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Clasa I - Adunări până la 20 – Jocuri Logice</title>
+<link rel="icon" href="LOGO.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="stil.css">
+<meta charset="UTF-8">
+    
+    
+    
+    <style>
+        /* Specific styles for this page */
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .exercise {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        input[type="number"] {
+            font-size: 1.2em;
+            padding: 8px;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            margin-left: 10px;
+            width: 80px;
+            text-align: center;
+        }
+        button {
+            font-size: 1.2em;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #006400;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #004d00;
+        }
+        .feedback {
+            font-size: 1.1em;
+            margin-top: 20px;
+        }
+        .feedback.correct {
+            color: green;
+        }
+        .feedback.error {
+            color: red;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<a class="skip-link" href="#continut">Sari la conținut</a>
+<header class="site-header">
+    <div class="header-top">
+        <a class="brand" href="index.html" aria-label="Jocuri Logice – pagina principală">
+            <img src="logo-palat.png" alt="" class="header-logo" width="113" height="38">
+            <span class="brand-text"><span class="site-name">Jocuri Logice</span></span>
+        </a>
+        <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="meniu"><span class="menu-icon" aria-hidden="true">☰</span><span>Meniu</span></button>
+    </div>
+    <nav aria-label="Navigare principală"><ul class="menu" id="meniu"><li><a href="index.html">Acasă</a></li><li><a href="clasa0.html">Clasa 0</a></li><li><a href="clasa1.html">Clasa I</a></li><li><a href="clasa2.html">Clasa a II-a</a></li><li><a href="clasa3.html">Clasa a III-a</a></li><li><a href="clasa4.html">Clasa a IV-a</a></li><li><a href="jocuri.html">Jocuri</a></li><li><a href="concurs.html">Concurs</a></li><li><a href="info.html">Informații</a></li><li><a href="resursedidactice.html">Resurse</a></li><li><a href="contact.html">Contact</a></li></ul></nav>
+</header>
+<main id="continut" class="legacy">
+<main>
+        <div class="container">
+            <h1>Exerciții de Adunare - Clasa I</h1>
+            <div id="exercise1" class="exercise">5 + 9 = <input type="number" id="answer1"></div>
+            <div id="exercise2" class="exercise hidden">7 + 6 = <input type="number" id="answer2"></div>
+            <div id="exercise3" class="exercise hidden">6 + 4 = <input type="number" id="answer3"></div>
+            <div id="exercise4" class="exercise hidden">8 + 5 = <input type="number" id="answer4"></div>
+            <div id="exercise5" class="exercise hidden">15 + 1 = <input type="number" id="answer5"></div>
+            <div id="exercise6" class="exercise hidden">13 + 7 = <input type="number" id="answer6"></div>
+            <div id="exercise7" class="exercise hidden">12 + 7 = <input type="number" id="answer7"></div>
+            <div id="exercise8" class="exercise hidden">9 + 8 = <input type="number" id="answer8"></div>
+            <div id="exercise9" class="exercise hidden">10 + 5 = <input type="number" id="answer9"></div>
+            <div id="exercise10" class="exercise hidden">7 + 6 = <input type="number" id="answer10"></div>
+            <button onclick="checkAnswers()">Verifică răspunsul</button>
+            <div id="feedback" class="feedback"></div>
+        </div>
+    </main>
+
+    
+
+    <script>
+        const exercises = [
+            { id: 'exercise1', answer: 14 },
+            { id: 'exercise2', answer: 13 },
+            { id: 'exercise3', answer: 10 },
+            { id: 'exercise4', answer: 13 },
+            { id: 'exercise5', answer: 16 },
+            { id: 'exercise6', answer: 20 },
+            { id: 'exercise7', answer: 19 },
+            { id: 'exercise8', answer: 17 },
+            { id: 'exercise9', answer: 15 },
+            { id: 'exercise10', answer: 13 }
+        ];
+
+        let currentExerciseIndex = 0;
+        const feedbackDiv = document.getElementById('feedback');
+        const checkButton = document.querySelector('button');
+
+        function showExercise() {
+            exercises.forEach(ex => document.getElementById(ex.id).classList.add('hidden'));
+            document.getElementById(exercises[currentExerciseIndex].id).classList.remove('hidden');
+            document.getElementById(`answer${currentExerciseIndex + 1}`).value = ''; // Clear previous answer
+            feedbackDiv.textContent = '';
+            feedbackDiv.className = 'feedback';
+        }
+
+        function checkAnswers() {
+            const currentExercise = exercises[currentExerciseIndex];
+            const userAnswer = parseInt(document.getElementById(`answer${currentExerciseIndex + 1}`).value);
+            const inputField = document.getElementById(`answer${currentExerciseIndex + 1}`);
+
+            if (userAnswer === currentExercise.answer) {
+                feedbackDiv.textContent = 'Corect!';
+                feedbackDiv.classList.add('correct');
+                inputField.style.borderColor = 'green';
+            } else {
+                feedbackDiv.textContent = 'Greșit. Încearcă din nou.';
+                feedbackDiv.classList.add('error');
+                inputField.style.borderColor = 'red';
+            }
+
+            if (userAnswer === currentExercise.answer) {
+                currentExerciseIndex++;
+                if (currentExerciseIndex < exercises.length) {
+                    setTimeout(showExercise, 1000); // Show next exercise after a delay
+                } else {
+                    feedbackDiv.textContent = 'Ai terminat toate exercițiile! Felicitări!';
+                    checkButton.style.display = 'none'; // Hide the button
+                }
+            }
+        }
+
+        // Initialize the first exercise
+        showExercise();
+    </script>
+</main>
+<footer class="site-footer">
+    <img src="LOGO.png" alt="Sigla Cercului de Jocuri Logice" class="footer-logo" width="56" height="56" loading="lazy">
+    <p>&copy; 2025 Cercul de Jocuri Logice – Palatul Copiilor Arad</p>
+</footer>
+<script src="meniu.js"></script>
+</body>
+</html>

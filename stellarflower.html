@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta charset="UTF-8">
+    <title>Serele Stelare - Math Garden</title>
+    <style>
+        body {
+            margin: 0;
+            background: linear-gradient(180deg, #050520 0%, #200530 100%);
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #garden {
+            position: relative;
+            width: 100%;
+            height: 60%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            padding-bottom: 50px;
+        }
+        .flower {
+            font-size: 100px;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            filter: drop-shadow(0 0 20px #f0f);
+        }
+        #ui-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 20px;
+            text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            width: 80%;
+            max-width: 400px;
+        }
+        .goal-text { font-size: 24px; margin-bottom: 10px; color: #0ff; }
+        .current-text { font-size: 40px; font-weight: bold; margin-bottom: 20px; text-shadow: 0 0 10px #fff; }
+        .btn-container { display: flex; justify-content: center; gap: 20px; }
+        .math-btn {
+            background: linear-gradient(135deg, #f0f, #70f);
+            border: none;
+            color: white;
+            padding: 15px 25px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 15px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255, 0, 255, 0.4);
+            transition: transform 0.1s;
+        }
+        .math-btn:active { transform: scale(0.9); }
+        .message { margin-top: 15px; font-style: italic; min-height: 24px; color: #ff0; }
+        .reset-btn { margin-top: 10px; background: none; border: 1px solid #fff; color: #fff; cursor: pointer; border-radius: 5px; }
+    </style>
+<meta name="joc-inapoi" content="clasa0.html">
+<link rel="stylesheet" href="joc.css">
+</head>
+<body>
+
+    <div id="garden">
+        <div id="flower" class="flower">🌱</div>
+    </div>
+
+    <div id="ui-panel">
+        <div class="goal-text">ȚINTĂ LUMINĂ: <span id="target-val">0</span></div>
+        <div class="current-text" id="current-val">0</div>
+        
+        <div class="btn-container">
+            <button class="math-btn" onclick="addValue(0)">+ <span id="btn-0">0</span></button>
+            <button class="math-btn" onclick="addValue(1)">+ <span id="btn-1">0</span></button>
+        </div>
+
+        <div id="msg" class="message"></div>
+        <button class="reset-btn" onclick="resetCurrent()">Șterge tot</button>
+    </div>
+
+    <script>
+        let target = 0;
+        let current = 0;
+        let btnVals = [0, 0];
+        let stage = 0;
+        const stages = ['🌱', '🌿', '🎍', '🌸', '🌺', '✨'];
+
+        function initLevel() {
+            current = 0;
+            // Generăm un target (multiplu de butoanele noastre)
+            btnVals[0] = Math.floor(Math.random() * 5) + 2; // 2-6
+            btnVals[1] = Math.floor(Math.random() * 5) + 3; // 3-7
+            
+            // Facem un target care să poată fi rezolvat (ex: 3*A + 2*B)
+            target = (btnVals[0] * (Math.floor(Math.random() * 3) + 1)) + 
+                     (btnVals[1] * (Math.floor(Math.random() * 3) + 1));
+
+            document.getElementById('target-val').innerText = target;
+            document.getElementById('btn-0').innerText = btnVals[0];
+            document.getElementById('btn-1').innerText = btnVals[1];
+            updateDisplay();
+            document.getElementById('msg').innerText = "Hrănește floarea cu lumină!";
+        }
+
+        function addValue(idx) {
+            current += btnVals[idx];
+            updateDisplay();
+
+            if (current === target) {
+                stage++;
+                if (stage >= stages.length - 1) {
+                    document.getElementById('flower').innerText = stages[stages.length - 1];
+                    document.getElementById('msg').innerText = "BRAVO! Floarea e magică!";
+                    setTimeout(() => { stage = 0; initLevel(); }, 3000);
+                } else {
+                    document.getElementById('msg').innerText = "Corect! Floarea crește!";
+                    document.getElementById('flower').innerText = stages[stage];
+                    setTimeout(initLevel, 1500);
+                }
+            } else if (current > target) {
+                document.getElementById('msg').innerText = "Prea multă lumină! S-a ofilit...";
+                document.getElementById('flower').style.filter = "grayscale(100%)";
+                setTimeout(() => {
+                    current = 0;
+                    stage = 0;
+                    document.getElementById('flower').style.filter = "drop-shadow(0 0 20px #f0f)";
+                    document.getElementById('flower').innerText = stages[0];
+                    initLevel();
+                }, 2000);
+            }
+        }
+
+        function resetCurrent() {
+            current = 0;
+            updateDisplay();
+            document.getElementById('msg').innerText = "Ai luat-o de la capăt.";
+        }
+
+        function updateDisplay() {
+            document.getElementById('current-val').innerText = current;
+            // Efect vizual de mărire la floare pe măsură ce se apropie de target
+            let scale = 1 + (current / target) * 0.5;
+            document.getElementById('flower').style.transform = `scale(${scale})`;
+        }
+
+        initLevel();
+    </script>
+<script src="joc.js"></script>
+</body>
+</html>

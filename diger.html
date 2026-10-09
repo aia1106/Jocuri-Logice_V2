@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="joc-inapoi" content="clasa4.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="icon" href="LOGO.png">
+<link rel="stylesheet" href="joc.css">
+<title>Robotul miner – Jocuri Logice</title>
+<style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #2A1450; color: #fff; overflow: hidden; touch-action: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+    #game-container { --cell: 35px; position: relative; display: grid; grid-template-columns: repeat(9, var(--cell)); grid-template-rows: repeat(13, var(--cell)); border: 6px solid #6A3BA0; border-radius: 18px; overflow: hidden; background: #4A2F20; box-shadow: 0 18px 40px -16px rgba(0,0,0,.6); }
+    .cell { width: var(--cell); height: var(--cell); display: flex; align-items: center; justify-content: center; font-size: calc(var(--cell) * .55); position: relative; }
+    .dirt { background: #B07A4F; box-shadow: inset 0 0 0 1px #9A6641; }
+    .dirt::before { content: ""; position: absolute; width: 4px; height: 4px; border-radius: 50%; background: rgba(0,0,0,.15); left: 28%; top: 30%; box-shadow: 14px 10px 0 rgba(0,0,0,.12); }
+    .empty { background: #4A2F20; }
+    .crystal { background: #B07A4F; box-shadow: inset 0 0 0 1px #9A6641; }
+    .crystal::after { content: '💎'; animation: pulse 1s infinite alternate; }
+    .rock::after { content: ""; width: 78%; height: 78%; border-radius: 46% 54% 50% 50%; background: radial-gradient(circle at 35% 30%, #C9C2D8, #7B7390 70%); box-shadow: 0 3px 0 rgba(0,0,0,.35); }
+    .rock { background: #4A2F20; }
+    #player { position: absolute; width: var(--cell); height: var(--cell); z-index: 10; display: flex; align-items: center; justify-content: center; font-size: calc(var(--cell) * .62); transition: left .1s ease, top .1s ease; pointer-events: none; }
+    #player::after { content: '🤖'; filter: drop-shadow(0 2px 2px rgba(0,0,0,.5)); }
+    @keyframes pulse { from { transform: scale(.8); } to { transform: scale(1.08); } }
+
+    #controls { display: grid; grid-template-columns: repeat(3, 64px); grid-template-rows: repeat(2, 64px); gap: 10px; }
+    .dpad { width: 64px; height: 64px; border: 0; border-radius: 50%; background: rgba(255,255,255,.14); color: #fff; font-size: 1.6rem; box-shadow: inset 0 0 0 2px rgba(255,255,255,.28); -webkit-tap-highlight-color: transparent; }
+    .dpad:active, .dpad.on { background: #FFB81C; color: #231B33; }
+    #btn-up { grid-column: 2; } #btn-left { grid-column: 1; grid-row: 2; } #btn-down { grid-column: 2; grid-row: 2; } #btn-right { grid-column: 3; grid-row: 2; }
+    @media (min-width: 900px) and (pointer: fine) { #controls { display: none; } }
+    .flash { animation: hurt .35s; }
+    @keyframes hurt { 40% { box-shadow: inset 0 0 40px 10px #E23B6B; } }
+</style>
+</head>
+<body class="jg">
+<div class="jg-hud"><span class="jg-pill">💎 <b id="score">0</b></span><span class="jg-pill">❤️ <b id="lives">3</b></span></div>
+
+<div id="game-container"><div id="player"></div></div>
+
+<div id="controls" aria-label="Butoane de direcție">
+    <button class="dpad" id="btn-up" type="button" aria-label="Sus">▲</button>
+    <button class="dpad" id="btn-left" type="button" aria-label="Stânga">◀</button>
+    <button class="dpad" id="btn-down" type="button" aria-label="Jos">▼</button>
+    <button class="dpad" id="btn-right" type="button" aria-label="Dreapta">▶</button>
+</div>
+
+<div class="jg-overlay" id="victory" hidden><div class="jg-emoji">🎉</div><h1 class="jg-title">Bravo!</h1><p class="jg-text">Ai strâns toate diamantele. Urmează o nouă hartă!</p></div>
+<div class="jg-overlay" id="game-over" hidden>
+    <div class="jg-emoji">🪨</div><h1 class="jg-title">Au! Prea multe pietre</h1>
+    <p class="jg-text">Ai strâns <b id="final-score">0</b> puncte.</p>
+    <p class="jg-best" id="ovBest"></p>
+    <button class="jg-btn" id="again" type="button">Încă o dată</button>
+</div>
+
+<script>
+const container = document.getElementById('game-container'), player = document.getElementById('player');
+const scoreEl = document.getElementById('score'), livesEl = document.getElementById('lives');
+const ROWS = 13, COLS = 9;
+let CELL = 35, score = 0, lives = 3, grid = [], crystalsLeft = 0, gameActive = true, playerPos = { x: 4, y: 0 }, best = 0;
+try { best = parseInt(localStorage.getItem('digger_best') || '0', 10) || 0; } catch (e) {}
+
+function sizeBoard() {
+    const controlsH = document.getElementById('controls').offsetParent ? 160 : 40;
+    const byW = (window.innerWidth - 40) / COLS, byH = (window.innerHeight - controlsH - 80) / ROWS;
+    CELL = Math.max(24, Math.min(46, Math.floor(Math.min(byW, byH))));
+    container.style.setProperty('--cell', CELL + 'px');
+    updatePlayerDisplay();
+}
+
+function initGame(keepScore) {
+    container.querySelectorAll('.cell').forEach(c => c.remove());
+    grid = []; crystalsLeft = 0; playerPos = { x: 4, y: 0 };
+    if (!keepScore) { score = 0; lives = 3; scoreEl.textContent = 0; livesEl.textContent = 3; }
+    for (let y = 0; y < ROWS; y++) {
+        grid[y] = [];
+        for (let x = 0; x < COLS; x++) {
+            const cell = document.createElement('div');
+            let type = 'dirt';
+            if (y === 0 && x === 4) type = 'empty';
+            else if (Math.random() < .15 && y > 1) type = 'rock';
+            else if (Math.random() < .10 && y > 1) { type = 'crystal'; crystalsLeft++; }
+            cell.className = 'cell ' + type;
+            container.insertBefore(cell, player);
+            grid[y][x] = { el: cell, type };
+        }
+    }
+    if (crystalsLeft === 0) { grid[5][5].type = 'crystal'; grid[5][5].el.className = 'cell crystal'; crystalsLeft = 1; }
+    updatePlayerDisplay();
+}
+
+function updatePlayerDisplay() { player.style.left = (playerPos.x * CELL) + 'px'; player.style.top = (playerPos.y * CELL) + 'px'; }
+
+function movePlayer(dir) {
+    if (!gameActive) return;
+    let nx = playerPos.x, ny = playerPos.y;
+    if (dir === 'up') ny--; if (dir === 'down') ny++; if (dir === 'left') nx--; if (dir === 'right') nx++;
+    if (nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS) return;
+    const target = grid[ny][nx];
+    if (target.type === 'rock') return;
+    playerPos.x = nx; playerPos.y = ny;
+    if (target.type === 'dirt' || target.type === 'crystal') {
+        if (target.type === 'crystal') { score += 50; crystalsLeft--; scoreEl.textContent = score; }
+        target.type = 'empty'; target.el.className = 'cell empty';
+        checkVictory();
+    }
+    updatePlayerDisplay();
+}
+
+window.addEventListener('keydown', (e) => {
+    const m = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', w: 'up', s: 'down', a: 'left', d: 'right' };
+    if (m[e.key]) { e.preventDefault(); movePlayer(m[e.key]); }
+});
+
+/* butoane: apăsare lungă = mișcare continuă */
+let holdTimer = null;
+function bindHold(id, dir) {
+    const b = document.getElementById(id);
+    const stop = () => { clearInterval(holdTimer); holdTimer = null; b.classList.remove('on'); };
+    b.addEventListener('pointerdown', (e) => { e.preventDefault(); b.classList.add('on'); movePlayer(dir); clearInterval(holdTimer); holdTimer = setInterval(() => movePlayer(dir), 150); });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, stop));
+}
+bindHold('btn-up', 'up'); bindHold('btn-down', 'down'); bindHold('btn-left', 'left'); bindHold('btn-right', 'right');
+
+/* swipe pe tablă */
+let tx = 0, ty = 0;
+container.addEventListener('pointerdown', (e) => { tx = e.clientX; ty = e.clientY; });
+container.addEventListener('pointerup', (e) => {
+    const dx = e.clientX - tx, dy = e.clientY - ty;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+    if (Math.abs(dx) > Math.abs(dy)) movePlayer(dx > 0 ? 'right' : 'left'); else movePlayer(dy > 0 ? 'down' : 'up');
+});
+
+function checkVictory() {
+    if (crystalsLeft > 0) return;
+    gameActive = false; score += 200; scoreEl.textContent = score;
+    document.getElementById('victory').hidden = false;
+    setTimeout(() => { document.getElementById('victory').hidden = true; gameActive = true; initGame(true); }, 2000);
+}
+
+setInterval(() => {
+    if (!gameActive) return;
+    for (let y = ROWS - 1; y >= 0; y--) for (let x = 0; x < COLS; x++) {
+        if (grid[y][x].type !== 'rock') continue;
+        const by = y + 1;
+        if (by < ROWS && grid[by][x].type === 'empty') {
+            if (playerPos.x === x && playerPos.y === by) hitPlayer();
+            grid[y][x].type = 'empty'; grid[y][x].el.className = 'cell empty';
+            grid[by][x].type = 'rock'; grid[by][x].el.className = 'cell rock';
+        }
+    }
+}, 400);
+
+function hitPlayer() {
+    lives--; livesEl.textContent = Math.max(lives, 0);
+    container.classList.remove('flash'); void container.offsetWidth; container.classList.add('flash');
+    if (lives <= 0) {
+        gameActive = false;
+        if (score > best) { best = score; try { localStorage.setItem('digger_best', best); } catch (e) {} }
+        document.getElementById('final-score').textContent = score;
+        document.getElementById('ovBest').textContent = '🏆 Cel mai bun scor: ' + best;
+        document.getElementById('game-over').hidden = false;
+    }
+}
+
+document.getElementById('again').addEventListener('click', () => { document.getElementById('game-over').hidden = true; gameActive = true; initGame(false); });
+window.addEventListener('resize', sizeBoard);
+window.addEventListener('orientationchange', () => setTimeout(sizeBoard, 200));
+initGame(false); sizeBoard();
+</script>
+<script src="joc.js"></script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Mate Clasa I - Corectat</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --success: #2ecc71;
+            --error: #e74c3c;
+            --bg: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .fisa {
+            background: white;
+            max-width: 500px;
+            width: 100%;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-top: 10px solid var(--primary);
+        }
+
+        .exercitiu {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+            padding: 10px;
+            border-bottom: 1px dashed #eee;
+        }
+
+        input {
+            width: 80px;
+            height: 45px;
+            text-align: center;
+            font-size: 1.3rem;
+            border: 2px solid #ced4da;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        /* STĂRI REZULTATE */
+        input.corect {
+            border-color: var(--success) !important;
+            background-color: #d4edda !important;
+            color: #155724;
+            pointer-events: none; /* Blochează modificarea după succes */
+        }
+
+        input.gresit {
+            border-color: var(--error) !important;
+            background-color: #f8d7da !important;
+            color: #721c24;
+            animation: shake 0.3s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #eee;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        #progress-fill {
+            width: 0%;
+            height: 100%;
+            background: var(--success);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+    </style>
+<meta name="joc-inapoi" content="clasa1.html">
+<link rel="stylesheet" href="joc.css">
+</head>
+<body>
+
+<div class="fisa">
+    <h1 style="text-align: center;">🔢 Mate Clasa I</h1>
+    <div class="progress-bar"><div id="progress-fill"></div></div>
+
+    <div id="quiz">
+        <div class="exercitiu"><span>5 + 3 =</span> <input type="number" data-answer="8"></div>
+        <div class="exercitiu"><span>10 - 4 =</span> <input type="number" data-answer="6"></div>
+        <div class="exercitiu"><span>12 + 5 =</span> <input type="number" data-answer="17"></div>
+        <div class="exercitiu"><span>18 - 6 =</span> <input type="number" data-answer="12"></div>
+        <div class="exercitiu"><span>7 + ? = 15</span> <input type="number" data-answer="8"></div>
+        <div class="exercitiu"><span>? - 5 = 10</span> <input type="number" data-answer="15"></div>
+    </div>
+</div>
+
+<script>
+    const inputs = document.querySelectorAll('input');
+    
+    inputs.forEach(input => {
+        // Folosim evenimentul 'input' pentru verificare în timp real
+        input.addEventListener('input', function() {
+            const val = this.value;
+            const target = this.getAttribute('data-answer');
+
+            // 1. Verificăm dacă e corect
+            if (val === target) {
+                this.classList.remove('gresit');
+                this.classList.add('corect');
+                updateProgress();
+                return;
+            }
+
+            // 2. Verificăm dacă e greșit (doar când lungimea e egală sau mai mare)
+            if (val.length >= target.length) {
+                this.classList.add('gresit');
+                
+                // După 2 secunde ștergem dacă a rămas greșit
+                setTimeout(() => {
+                    if (!this.classList.contains('corect')) {
+                        this.value = '';
+                        this.classList.remove('gresit');
+                    }
+                }, 2000);
+            }
+        });
+    });
+
+    function updateProgress() {
+        const correct = document.querySelectorAll('input.corect').length;
+        const total = inputs.length;
+        document.getElementById('progress-fill').style.width = (correct / total * 100) + '%';
+        
+        if(correct === total) {
+            alert("Excelent! Ai rezolvat toate exercițiile!");
+        }
+    }
+</script>
+
+<script src="joc.js"></script>
+</body>
+</html>

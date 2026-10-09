@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Memorie sub Ape - Matematica distractivă</title>
+    <style>
+        :root {
+            --water: #2980b9;
+            --sand: #f1c40f;
+            --card-back: #3498db;
+            --card-front: #ffffff;
+            --text: #2c3e50;
+        }
+
+        body {
+            background: linear-gradient(to bottom, #4facfe 0%, #00f2fe 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            color: white;
+        }
+
+        h1 { text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px; }
+
+        .game-stats {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .card {
+            aspect-ratio: 1/1;
+            background-color: var(--card-back);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text);
+            transition: transform 0.3s, background-color 0.3s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            user-select: none;
+            border: 4px solid white;
+        }
+
+        .card.flipped {
+            background-color: var(--card-front);
+            transform: rotateY(180deg);
+        }
+
+        .card.hidden {
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+
+        .card span {
+            transform: rotateY(180deg);
+            display: none;
+        }
+
+        .card.flipped span {
+            display: block;
+        }
+
+        #win-screen {
+            display: none;
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            color: var(--text);
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            z-index: 100;
+        }
+
+        button {
+            background: #e67e22;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        button:hover { background: #d35400; }
+    </style>
+<meta name="joc-inapoi" content="clasa2.html">
+<link rel="stylesheet" href="joc.css">
+</head>
+<body>
+
+    <h1>🐠 Perechi Matematice 🐙</h1>
+    
+    <div class="game-stats">
+        Încercări: <span id="moves">0</span> | Perechi găsite: <span id="matches">0/6</span>
+    </div>
+
+    <div class="game-grid" id="grid"></div>
+
+    <div id="win-screen">
+        <h2>Felicitări! 🎉</h2>
+        <p>Ești un geniu al matematicii!</p>
+        <p>Ai terminat din <span id="final-moves">0</span> încercări.</p>
+        <button onclick="resetGame()">Joacă din nou 🌊</button>
+    </div>
+
+<script>
+    const grid = document.getElementById('grid');
+    let cards = [];
+    let flippedCards = [];
+    let moves = 0;
+    let matches = 0;
+
+    // Generăm setul de date (Operație + Rezultat)
+    const data = [
+        { q: '2 × 5', a: '10' },
+        { q: '3 × 4', a: '12' },
+        { q: '5 × 5', a: '25' },
+        { q: '20 ÷ 2', a: '10' }, // Challenge: operații diferite cu același rezultat
+        { q: '14 + 6', a: '20' },
+        { q: '30 - 5', a: '25' }
+    ];
+
+    // Ne asigurăm că avem perechi unice pentru a nu crea confuzie
+    // Folosim un ID pentru fiecare pereche
+    const gamePairs = [
+        { text: '2 × 4', id: 1 }, { text: '8', id: 1 },
+        { text: '5 × 3', id: 2 }, { text: '15', id: 2 },
+        { text: '10 ÷ 2', id: 3 }, { text: '5', id: 3 },
+        { text: '18 - 9', id: 4 }, { text: '9', id: 4 },
+        { text: '4 × 4', id: 5 }, { text: '16', id: 5 },
+        { text: '7 + 6', id: 6 }, { text: '13', id: 6 },
+        { text: '3 × 3', id: 7 }, { text: '9', id: 7 }, // Atenție la duplicate
+        { text: '20 - 2', id: 8 }, { text: '18', id: 8 }
+    ];
+
+    function initGame() {
+        grid.innerHTML = '';
+        moves = 0;
+        matches = 0;
+        flippedCards = [];
+        document.getElementById('moves').textContent = moves;
+        document.getElementById('matches').textContent = '0/8';
+        document.getElementById('win-screen').style.display = 'none';
+
+        // Amestecăm cardurile
+        const shuffled = [...gamePairs].sort(() => Math.random() - 0.5);
+
+        shuffled.forEach(item => {
+            const card = document.createElement('div');
+            card.classList.add('card');
+            card.dataset.id = item.id;
+            card.innerHTML = `<span>${item.text}</span>`;
+            card.onclick = () => flipCard(card);
+            grid.appendChild(card);
+        });
+    }
+
+    function flipCard(card) {
+        if (flippedCards.length < 2 && !card.classList.contains('flipped')) {
+            card.classList.add('flipped');
+            flippedCards.push(card);
+
+            if (flippedCards.length === 2) {
+                moves++;
+                document.getElementById('moves').textContent = moves;
+                checkMatch();
+            }
+        }
+    }
+
+    function checkMatch() {
+        const [c1, c2] = flippedCards;
+        const isMatch = c1.dataset.id === c2.dataset.id;
+
+        if (isMatch) {
+            matches++;
+            document.getElementById('matches').textContent = `${matches}/8`;
+            setTimeout(() => {
+                c1.classList.add('hidden');
+                c2.classList.add('hidden');
+                flippedCards = [];
+                if (matches === 8) showWin();
+            }, 600);
+        } else {
+            setTimeout(() => {
+                c1.classList.remove('flipped');
+                c2.classList.remove('flipped');
+                flippedCards = [];
+            }, 1000);
+        }
+    }
+
+    function showWin() {
+        document.getElementById('win-screen').style.display = 'block';
+        document.getElementById('final-moves').textContent = moves;
+    }
+
+    function resetGame() {
+        initGame();
+    }
+
+    initGame();
+</script>
+<script src="joc.js"></script>
+</body>
+</html>

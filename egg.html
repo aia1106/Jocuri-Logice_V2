@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Găina Jucăușă Pro - Kawaii Design</title>
+    <style>
+        :root {
+            --sky: #4facfe;
+            --grass: #4caf50;
+            --chicken-body: #ffeb3b; /* Galben de bază */
+            --chicken-feather: #fff9c4; /* Galben deschis pentru detalii */
+            --basket-wood: #795548;
+            --basket-light: #a1887f;
+        }
+
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100dvh;
+            background-color: #2c3e50;
+            user-select: none; -webkit-user-select: none;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        #game-container {
+            position: relative;
+            flex: none;
+            transform-origin: center center;
+            width: 360px;
+            height: 640px;
+            background: linear-gradient(to bottom, var(--sky) 0%, #00f2fe 100%);
+            border: 8px solid #333;
+            border-radius: 30px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        /* Iarbă la bază pentru design */
+        #game-container::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 40px;
+            background: var(--grass);
+            z-index: 1;
+        }
+
+        /* Alerte Vizuale */
+        .miss-alert { animation: flashRed 0.4s; }
+        @keyframes flashRed {
+            0% { background: rgba(255, 0, 0, 0); }
+            50% { background: rgba(255, 0, 0, 0.4); }
+            100% { background: rgba(255, 0, 0, 0); }
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            z-index: 50;
+        }
+
+        .stat-box {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 15px;
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .tray {
+            position: absolute;
+            height: 14px;
+            background: linear-gradient(90deg, #5d4037, #8d6e63);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            z-index: 5;
+        }
+
+        #tray-0 { top: 150px; left: -10px; width: 140px; transform: rotate(20deg); }
+        #tray-1 { top: 380px; left: -10px; width: 120px; transform: rotate(20deg); }
+        #tray-2 { top: 100px; right: -10px; width: 80px; transform: rotate(-20deg); }
+        #tray-3 { top: 260px; right: -10px; width: 130px; transform: rotate(-20deg); }
+
+        /* --- NOUL DESIGN AL JUCĂTORULUI --- */
+        #player-group {
+            position: absolute;
+            bottom: 45px;
+            width: 100px; /* Puțin mai lat pentru aripi */
+            height: 120px;
+            transition: transform 0.1s;
+            z-index: 20;
+            left: 130px;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #chicken-new {
+            width: 70px;
+            height: 75px;
+            background: var(--chicken-body);
+            border-radius: 50% 50% 45% 45%; /* Formă moale, ovoidală */
+            position: relative;
+            border: 3px solid #fbc02d;
+            box-shadow: inset -3px -6px 0 rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        /* Creasta redesenată */
+        .comb-new {
+            position: absolute;
+            top: -14px;
+            left: 22px;
+            width: 26px;
+            height: 18px;
+            background: #f44336;
+            border-radius: 12px 12px 0 0;
+            border: 2px solid #b71c1c;
+        }
+        .comb-new::before { /* Al doilea lob al crestei */
+            content: '';
+            position: absolute;
+            bottom: 0; left: -8px;
+            width: 14px; height: 12px;
+            background: #f44336;
+            border-radius: 10px 10px 0 0;
+            border-left: 2px solid #b71c1c;
+            border-top: 2px solid #b71c1c;
+        }
+
+        /* Ochi mari Kawaii */
+        .eye-new {
+            position: absolute;
+            top: 22px;
+            width: 14px;
+            height: 18px;
+            background: #1a1a1a;
+            border-radius: 50%;
+        }
+        .eye-new.left { left: 14px; }
+        .eye-new.right { right: 14px; }
+        
+        /* Sclipici în ochi */
+        .eye-new::after {
+            content: '';
+            position: absolute;
+            top: 3px; left: 3px;
+            width: 5px; height: 7px;
+            background: white;
+            border-radius: 50%;
+        }
+
+        /* Bujori (obraji roz) */
+        .blush {
+            position: absolute;
+            top: 38px;
+            width: 12px;
+            height: 6px;
+            background: rgba(255, 138, 128, 0.6);
+            border-radius: 50%;
+        }
+        .blush.left { left: 10px; }
+        .blush.right { right: 10px; }
+
+        #beak-new {
+            position: absolute;
+            top: 36px;
+            left: 27px;
+            width: 16px;
+            height: 12px;
+            background: #ff9800;
+            border-radius: 2px 2px 10px 10px;
+            border: 2px solid #e65100;
+        }
+
+        /* Aripi laterale */
+        .wing {
+            position: absolute;
+            top: 35px;
+            width: 15px;
+            height: 25px;
+            background: var(--chicken-body);
+            border: 2px solid #fbc02d;
+            border-radius: 20px 0 0 20px;
+            z-index: -1;
+        }
+        .wing.left { left: -10px; transform: rotate(-10deg); }
+        .wing.right { right: -10px; transform: scaleX(-1) rotate(-10deg); }
+
+        /* Coș redesenat */
+        #basket-new {
+            width: 96px;
+            height: 48px;
+            background: var(--basket-wood);
+            border-radius: 8px 8px 45px 45%;
+            border: 4px solid #3e2723;
+            margin-top: -12px;
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(0,0,0,0.1) 8px, rgba(0,0,0,0.1) 16px);
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        /* Bordura deschisă a coșului */
+        #basket-new::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 8px;
+            background: var(--basket-light);
+            border-radius: 4px 4px 0 0;
+            border-bottom: 2px solid #3e2723;
+        }
+        /* ---------------------------------- */
+
+        .egg {
+            position: absolute;
+            width: 24px; height: 32px;
+            background: radial-gradient(circle at 30% 30%, #ffffff, #e0e0e0);
+            border-radius: 50% 50% 50% 50% / 65% 65% 40% 40%;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .bomb {
+            position: absolute;
+            width: 30px; height: 30px;
+            background: #222;
+            border-radius: 50%;
+            z-index: 11;
+            box-shadow: inset -3px -3px 8px black;
+        }
+        .bomb::before {
+            content: '🔥';
+            position: absolute;
+            top: -15px; right: -5px;
+            font-size: 14px;
+        }
+
+        .splat {
+            position: absolute;
+            width: 50px; height: 20px;
+            background: #ffeb3b;
+            border-radius: 50%;
+            animation: splatAnim 0.4s forwards;
+            z-index: 2;
+        }
+
+        @keyframes splatAnim {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+
+        #warning-text {
+            position: absolute;
+            top: 40%; width: 100%;
+            text-align: center;
+            color: #ff1744;
+            font-size: 45px;
+            font-weight: 900;
+            display: none;
+            z-index: 100;
+            text-shadow: 0 0 20px rgba(0,0,0,0.5);
+            pointer-events: none;
+        }
+
+        #game-over {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 1000;
+        }
+
+        button {
+            padding: 15px 40px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #2e7d32;
+        }
+        button:active { transform: translateY(4px); box-shadow: 0 1px 0 #2e7d32; }
+    
+        /* RESTYLE-EGG: stilul unitar al site-ului */
+        body { background: #2A1450 !important; font-family: "Nunito", "Segoe UI", sans-serif !important; }
+        #game-container { border: 6px solid #6A3BA0 !important; border-radius: 28px !important; }
+        .stat-box { background: #fff !important; color: #231B33 !important; border: 0 !important; font-family: "Fredoka", "Trebuchet MS", sans-serif !important; font-weight: 700 !important; font-size: 1.1rem !important; box-shadow: 0 4px 12px -4px rgba(0,0,0,.4); backdrop-filter: none !important; }
+        #game-over { background: rgba(42,20,80,.92) !important; color: #fff !important; }
+        #game-over h1 { color: #fff !important; font-family: "Fredoka", "Trebuchet MS", sans-serif !important; font-size: 2.4rem !important; margin: 0 !important; }
+        #game-over p { color: #FFB81C !important; font-family: "Nunito", sans-serif !important; font-weight: 800; }
+        #game-over button { background: #FFB81C !important; color: #231B33 !important; border-radius: 999px !important; box-shadow: 0 6px 0 #C99A10 !important; min-height: 56px; padding: 0 32px !important; font-family: "Fredoka", "Trebuchet MS", sans-serif !important; font-size: 1.2rem !important; }
+    </style>
+<meta name="joc-inapoi" content="clasa1.html">
+<link rel="stylesheet" href="joc.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div id="game-container">
+    <div id="warning-text">BUM!</div>
+    <div id="ui-layer">
+        <div class="stat-box" id="score">Scor: 0</div>
+        <div class="stat-box" id="lives">❤️ 3</div>
+    </div>
+    
+    <div id="tray-0" class="tray"></div>
+    <div id="tray-1" class="tray"></div>
+    <div id="tray-2" class="tray"></div>
+    <div id="tray-3" class="tray"></div>
+
+    <div id="player-group">
+        <div id="chicken-new">
+            <div class="comb-new"></div>
+            <div class="wing left"></div>
+            <div class="wing right"></div>
+            <div class="eye-new left"></div>
+            <div class="eye-new right"></div>
+            <div class="blush left"></div>
+            <div class="blush right"></div>
+            <div id="beak-new"></div>
+        </div>
+        <div id="basket-new"></div>
+    </div>
+
+    <div id="game-over">
+        <h1 style="color: #ff1744; font-size: 40px;">Ai terminat!</h1>
+        <p id="final-score" style="font-size: 24px;">Scor final: 0</p>
+        <button onclick="restartGame()">JOACĂ DIN NOU</button>
+    </div>
+</div>
+
+<script>
+    const container = document.getElementById('game-container');
+    const player = document.getElementById('player-group');
+    const scoreElement = document.getElementById('score');
+    const livesElement = document.getElementById('lives');
+    const gameOverScreen = document.getElementById('game-over');
+    const warningText = document.getElementById('warning-text');
+    
+    let score = 0;
+    let lives = 3;
+    let gameActive = true;
+    
+    const trayConfigs = [
+        { x: 0, y: 150, dir: 1, endX: 130 },
+        { x: 0, y: 380, dir: 1, endX: 110 },
+        { x: 360, y: 100, dir: -1, endX: 280 },
+        { x: 360, y: 260, dir: -1, endX: 230 }
+    ];
+
+    // micșorează/mărește jocul ca să încapă pe orice ecran
+    let scale = 1;
+    function fit() {
+        scale = Math.min((window.innerHeight - 16) / 656, (window.innerWidth - 8) / 376, 1.5);
+        container.style.transform = 'scale(' + scale + ')';
+    }
+    window.addEventListener('resize', fit);
+    window.addEventListener('orientationchange', fit);
+    fit();
+
+    const moveHandler = (e) => {
+        if (!gameActive) return;
+        let rect = container.getBoundingClientRect();
+        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        // Ajustat centrul pentru noua lățime (100px)
+        let x = (clientX - rect.left - 8 * scale) / scale - 50;
+        x = Math.max(0, Math.min(x, 260));
+        player.style.left = x + 'px';
+    };
+
+    container.addEventListener('mousemove', moveHandler);
+    container.addEventListener('touchstart', (e) => { e.preventDefault(); moveHandler(e); }, {passive: false});
+    container.addEventListener('touchmove', (e) => { e.preventDefault(); moveHandler(e); }, {passive: false});
+
+    // tastatură: săgeți stânga/dreapta sau A/D
+    let posX = 130;
+    window.addEventListener('keydown', (e) => {
+        if (!gameActive) return;
+        const k = e.key.toLowerCase();
+        if (k === 'arrowleft' || k === 'a') posX -= 28;
+        else if (k === 'arrowright' || k === 'd') posX += 28;
+        else return;
+        e.preventDefault();
+        posX = Math.max(0, Math.min(posX, 260));
+        player.style.left = posX + 'px';
+    });
+
+    function triggerAlert(text, color) {
+        container.classList.add('miss-alert');
+        warningText.innerText = text;
+        warningText.style.color = color || '#ff1744';
+        warningText.style.display = 'block';
+        setTimeout(() => {
+            container.classList.remove('miss-alert');
+            warningText.style.display = 'none';
+        }, 500);
+    }
+
+    function createObject() {
+        if (!gameActive) return;
+
+        const isBomb = Math.random() < 0.25; // 25% șanse să fie bombă
+        const obj = document.createElement('div');
+        obj.className = isBomb ? 'bomb' : 'egg';
+        
+        const tray = trayConfigs[Math.floor(Math.random() * trayConfigs.length)];
+        
+        // VITEZA VARIABILĂ: Factor de viteză între 0.7x și 1.8x față de bază
+        const speedVar = 0.7 + (Math.random() * 1.1);
+        const difficulty = 1 + (score / 100); // Se accelerează ușor cu scorul
+
+        let objX = tray.dir === 1 ? 5 : 335;
+        let objY = tray.y - 25;
+        let vx = (tray.dir * 2.5) * speedVar * difficulty;
+        let vy = 1 * speedVar;
+        let gravity = 0.2 * speedVar;
+        let rolling = true;
+
+        container.appendChild(obj);
+
+        let update = setInterval(() => {
+            if (!gameActive) {
+                obj.remove();
+                clearInterval(update);
+                return;
+            }
+
+            if (rolling) {
+                objX += vx;
+                objY += (1.1 * speedVar);
+                if ((tray.dir === 1 && objX > tray.endX) || (tray.dir === -1 && objX < tray.endX)) {
+                    rolling = false;
+                }
+            } else {
+                vy += gravity;
+                objY += vy;
+                objX += vx * 0.4;
+            }
+
+            obj.style.left = objX + 'px';
+            obj.style.top = objY + 'px';
+            obj.style.transform = `rotate(${objX * 5}deg)`;
+
+            let pRect = player.getBoundingClientRect();
+            let oRect = obj.getBoundingClientRect();
+
+            // Detectie Coliziune Cos (ajustată pentru noul design)
+            if (oRect.bottom > pRect.top + 60 && 
+                oRect.left < pRect.right && 
+                oRect.right > pRect.left &&
+                oRect.top < pRect.bottom) {
+                
+                if (isBomb) {
+                    lives--;
+                    triggerAlert("BUM! -1", "#ff5722");
+                } else {
+                    score++;
+                    scoreElement.innerText = "Scor: " + score;
+                }
+                
+                livesElement.innerText = "❤️ " + lives;
+                obj.remove();
+                clearInterval(update);
+                if (lives <= 0) endGame();
+            }
+
+            // Daca atinge pamantul
+            if (objY > 605) {
+                if (!isBomb) {
+                    createSplat(objX, objY);
+                    lives--;
+                    livesElement.innerText = "❤️ " + lives;
+                    triggerAlert("RATAT!", "#ff1744");
+                }
+                obj.remove();
+                clearInterval(update);
+                if (lives <= 0) endGame();
+            }
+        }, 16);
+    }
+
+    function createSplat(x, y) {
+        const splat = document.createElement('div');
+        splat.className = 'splat';
+        splat.style.left = x - 10 + 'px';
+        splat.style.top = y + 15 + 'px';
+        container.appendChild(splat);
+        setTimeout(() => splat.remove(), 400);
+    }
+
+    function endGame() {
+        gameActive = false;
+        gameOverScreen.style.display = 'flex';
+        document.getElementById('final-score').innerText = "Scor final: " + score;
+    }
+
+    function restartGame() {
+        score = 0;
+        lives = 3;
+        gameActive = true;
+        scoreElement.innerText = "Scor: 0";
+        livesElement.innerText = "❤️ 3";
+        gameOverScreen.style.display = 'none';
+        document.querySelectorAll('.egg, .bomb').forEach(e => e.remove());
+    }
+
+    // Spawn rate care crește ușor cu timpul
+    function spawnController() {
+        if (gameActive) createObject();
+        let nextSpawn = Math.max(400, 1400 - (score * 5));
+        setTimeout(spawnController, nextSpawn);
+    }
+
+    spawnController();
+</script>
+
+<script src="joc.js"></script>
+</body>
+</html>

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta charset="UTF-8">
+    <title>CyberMath - Extended Mission</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+        :root {
+            --neon-blue: #00f2ff;
+            --neon-pink: #ff007f;
+            --neon-green: #39ff14;
+            --bg: #050505;
+            --current-theme: #00f2ff;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #game-frame {
+            width: 90%;
+            max-width: 850px;
+            background: rgba(10, 10, 20, 0.95);
+            border: 3px solid var(--current-theme);
+            padding: 40px;
+            box-shadow: 0 0 40px rgba(0, 242, 255, 0.1);
+            position: relative;
+            text-align: center;
+            transition: border-color 1s ease;
+        }
+
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            color: var(--neon-pink);
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 12px;
+            background: #111;
+            border: 1px solid #333;
+            margin-bottom: 30px;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--current-theme);
+            box-shadow: 0 0 15px var(--current-theme);
+            transition: 0.4s;
+        }
+
+        #timer-box {
+            font-size: 1.5rem;
+            color: var(--neon-green);
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .code-display {
+            background: #000;
+            border: 1px solid var(--neon-pink);
+            padding: 40px;
+            margin-bottom: 30px;
+        }
+
+        #equation { font-size: 3rem; text-shadow: 0 0 10px #fff; }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        button {
+            background: transparent;
+            border: 2px solid var(--current-theme);
+            color: var(--current-theme);
+            padding: 20px;
+            font-size: 1.8rem;
+            font-family: 'Orbitron';
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: var(--current-theme);
+            color: black;
+            box-shadow: 0 0 25px var(--current-theme);
+        }
+
+        #status {
+            color: var(--neon-pink);
+            margin-top: 15px;
+            height: 20px;
+            visibility: hidden;
+            font-size: 0.8rem;
+        }
+
+        .overlay {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: black;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+    </style>
+<meta name="joc-inapoi" content="clasa4.html">
+<link rel="stylesheet" href="joc.css">
+</head>
+<body>
+
+<div id="game-frame">
+    <div class="header-info">
+        <span id="sector-text">Sector: 01 - Earth Orbit</span>
+        <span>Quest: <span id="quest-num">1</span>/11</span>
+    </div>
+
+    <div class="progress-container">
+        <div id="progress-bar"></div>
+    </div>
+
+    <div id="timer-box">CORE STABILITY: <span id="timer-val">30</span>s</div>
+
+    <div class="code-display">
+        <h2 id="equation">---</h2>
+    </div>
+
+    <div id="status">ERROR: CALCULATION MISMATCH!</div>
+
+    <div class="btn-grid" id="options"></div>
+
+    <div id="level-up-ui" class="overlay">
+        <h1 style="color: var(--neon-blue);">SECTOR 01 CLEAR</h1>
+        <p>Coduri de bază descifrate. Trecere la Sectorul 02...</p>
+        <button onclick="startLevel2()" style="border-color: var(--neon-pink); color: var(--neon-pink);">WARP JUMP</button>
+    </div>
+
+    <div id="win-ui" class="overlay">
+        <h1 style="color: var(--neon-green); font-size: 3rem;">MISSION ACCOMPLISHED</h1>
+        <p>Eroule, ai asigurat controlul rețelei!</p>
+        <button onclick="location.reload()" style="border-color: var(--neon-green); color: var(--neon-green);">RESTART</button>
+    </div>
+</div>
+
+<script>
+    let currentTaskIndex = 0;
+    let currentSector = 1;
+    let isBossMode = false;
+    let timer = 30;
+    let timerInterval;
+
+    // NIVEL 1 - 11 Exerciții (Încălzire + Puzzle-urile tale)
+    const level1Tasks = [
+        { q: "55 + 45", a: 100, opts: [90, 100, 110, 105] },
+        { q: "150 - 60", a: 90, opts: [80, 90, 100, 70] },
+        { q: "7 × 8", a: 56, opts: [54, 56, 64, 48] },
+        { q: "81 ÷ 9", a: 9, opts: [7, 8, 9, 10] },
+        { q: "100 - 35", a: 65, opts: [65, 55, 75, 45] },
+        // Puzzle-urile introduse de tine:
+        { q: "5 + 2 × 3", a: 11, opts: [21, 11, 10, 15] },
+        { q: "(10 - 2) × 5", a: 40, opts: [8, 40, 48, 50] },
+        { q: "20 ÷ 4 + 6", a: 11, opts: [2, 11, 10, 5] },
+        { q: "30 - 10 ÷ 2", a: 25, opts: [10, 25, 20, 15] },
+        { q: "4 × (3 + 7)", a: 40, opts: [19, 40, 25, 30] },
+        { q: "15 + 15 ÷ 3 - 2", a: 18, opts: [8, 18, 10, 28] }
+    ];
+
+    const level2Tasks = [
+        { q: "(200 + 300) × 2", a: 1000, opts: [1000, 800, 700, 500] },
+        { q: "1200 - 400 ÷ 2", a: 1000, opts: [1000, 400, 800, 600] },
+        { q: "25 × 4 + 150", a: 250, opts: [250, 200, 300, 150] }
+    ];
+
+    const bossTasks = [
+        { q: "(50 × 4) + (25 × 2)", a: 250, opts: [250, 225, 300, 275] },
+        { q: "1000 ÷ 5 - 50", a: 150, opts: [150, 250, 100, 200] }
+    ];
+
+    function loadTask() {
+        let pool, task;
+        
+        if (currentSector === 1) {
+            if (currentTaskIndex >= level1Tasks.length) {
+                showLevelUp();
+                return;
+            }
+            pool = level1Tasks;
+            document.getElementById('quest-num').textContent = currentTaskIndex + 1;
+            task = pool[currentTaskIndex];
+            updateProgress(currentTaskIndex, level1Tasks.length);
+        } else {
+            let totalL2 = level2Tasks.length + bossTasks.length;
+            if (currentTaskIndex >= totalL2) {
+                clearInterval(timerInterval);
+                document.getElementById('win-ui').style.display = 'flex';
+                return;
+            }
+            if (currentTaskIndex >= level2Tasks.length && !isBossMode) startBossMode();
+            pool = isBossMode ? bossTasks : level2Tasks;
+            let idx = isBossMode ? currentTaskIndex - level2Tasks.length : currentTaskIndex;
+            task = pool[idx];
+            updateProgress(currentTaskIndex, totalL2);
+        }
+
+        document.getElementById('equation').textContent = task.q;
+        const grid = document.getElementById('options');
+        grid.innerHTML = '';
+        task.opts.sort(() => Math.random() - 0.5).forEach(o => {
+            const b = document.createElement('button');
+            b.textContent = o;
+            b.onclick = () => check(o, task.a);
+            grid.appendChild(b);
+        });
+    }
+
+    function check(val, correct) {
+        if (val === correct) {
+            currentTaskIndex++;
+            document.getElementById('status').style.visibility = 'hidden';
+            loadTask();
+        } else {
+            document.getElementById('status').style.visibility = 'visible';
+            document.getElementById('game-frame').style.animation = 'shake 0.2s 3';
+            setTimeout(() => document.getElementById('game-frame').style.animation = '', 600);
+            if (isBossMode) timer -= 5;
+        }
+    }
+
+    function updateProgress(current, total) {
+        document.getElementById('progress-bar').style.width = (current / total * 100) + '%';
+    }
+
+    function showLevelUp() { document.getElementById('level-up-ui').style.display = 'flex'; }
+
+    function startLevel2() {
+        currentSector = 2;
+        currentTaskIndex = 0;
+        document.getElementById('level-up-ui').style.display = 'none';
+        document.getElementById('sector-text').textContent = "Sector: 02 - Deep Space";
+        document.documentElement.style.setProperty('--current-theme', '#ff007f');
+        loadTask();
+    }
+
+    function startBossMode() {
+        isBossMode = true;
+        document.getElementById('timer-box').style.display = 'block';
+        document.documentElement.style.setProperty('--current-theme', '#39ff14');
+        timerInterval = setInterval(() => {
+            timer--;
+            document.getElementById('timer-val').textContent = timer;
+            if (timer <= 0) { clearInterval(timerInterval); location.reload(); }
+        }, 1000);
+    }
+
+    loadTask();
+</script>
+<style> @keyframes shake { 0% { transform: translate(5px); } 50% { transform: translate(-5px); border-color: red; } 100% { transform: translate(0); } } </style>
+<script src="joc.js"></script>
+</body>
+</html>
