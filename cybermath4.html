@@ -1,339 +1,160 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta charset="UTF-8">
-    <title>Math Alchemist - Crystal Lab Pro</title>
-    <style>
-        :root {
-            --cyan: #00f2ff;
-            --purple: #7d2ae8;
-            --pink: #ff00c8;
-            --gold: #ffcc00;
-            --bg: #050510;
-        }
-
-        body {
-            margin: 0;
-            background-color: var(--bg);
-            background: radial-gradient(circle at center, #101035 0%, #050510 100%);
-            color: white;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100dvh;
-            overflow-x: hidden; overflow-y: auto;
-        }
-
-        .stars {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: -1;
-            background: url('https://www.transparenttextures.com/patterns/stardust.png');
-            opacity: 0.3;
-        }
-
-        #game-container {
-            position: relative;
-            width: 95%;
-            max-width: 480px;
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 40px;
-            padding: 30px;
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-        }
-
-        .score-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            font-size: 0.8rem;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        .score-val { color: var(--gold); font-weight: bold; font-size: 1.1rem; }
-        .high-val { color: var(--cyan); opacity: 0.8; }
-
-        .target-hud { margin-bottom: 25px; }
-        .target-label { font-size: 0.7rem; letter-spacing: 4px; color: var(--cyan); text-transform: uppercase; margin-bottom: 8px; opacity: 0.7; }
-
-        .target-circle {
-            width: 100px;
-            height: 100px;
-            margin: 0 auto;
-            border: 3px solid var(--cyan);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.8rem;
-            font-weight: 900;
-            text-shadow: 0 0 20px var(--cyan);
-            background: rgba(0, 242, 255, 0.05);
-            animation: pulse-glow 2s infinite;
-        }
-
-        @keyframes pulse-glow {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 10px var(--cyan); }
-            50% { transform: scale(1.05); box-shadow: 0 0 25px var(--purple); border-color: var(--purple); }
-        }
-
-        .display-panel {
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 20px;
-            padding: 15px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            min-height: 80px;
-        }
-
-        #formula-text { font-size: 1.1rem; color: #aaa; min-height: 1.4rem; margin-bottom: 5px; letter-spacing: 1px; }
-        #live-result { font-size: 2.4rem; font-weight: bold; color: var(--gold); }
-
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
-
-        .btn-crystal {
-            background: rgba(255, 255, 255, 0.08);
-            color: white;
-            font-size: 1.4rem;
-            font-weight: bold;
-            height: 60px;
-            border-radius: 15px;
-            border: 1px solid rgba(255,255,255,0.15);
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .btn-crystal:hover:not(:disabled) { background: var(--cyan); color: #000; }
-        .btn-crystal:disabled { opacity: 0.2; cursor: not-allowed; }
-
-        .btn-op {
-            background: linear-gradient(135deg, var(--purple), var(--pink));
-            color: white;
-            height: 50px;
-            border-radius: 12px;
-            font-size: 1.3rem;
-            border: none;
-            cursor: pointer;
-        }
-
-        .btn-paren {
-            background: rgba(255, 255, 255, 0.15);
-            color: var(--cyan);
-            font-weight: bold;
-        }
-
-        .btn-reset {
-            grid-column: span 4;
-            background: none;
-            border: 1px solid rgba(255, 75, 43, 0.3);
-            color: #ff4b2b;
-            padding: 8px;
-            border-radius: 10px;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        #success-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(5, 5, 16, 0.95);
-            border-radius: 40px;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-        }
-    </style>
 <meta name="joc-inapoi" content="clasa4.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="icon" href="LOGO.png">
 <link rel="stylesheet" href="joc.css">
+<title>Laboratorul numerelor – Jocuri Logice</title>
+<style>
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body { background: linear-gradient(#2A1450, #4A2370); min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 70px 12px 24px; color: #231B33; }
+    .jg-hud { position: fixed; }
+    #card { width: min(100%, 460px); background: #fff; border-radius: 32px; padding: 20px 16px 18px; box-shadow: 0 20px 44px -18px rgba(0,0,0,.65); text-align: center; }
+    .label { margin: 0; font: 800 .85rem var(--j-font-text); color: #5B5270; text-transform: uppercase; letter-spacing: .07em; }
+    #target { width: 104px; height: 104px; margin: 8px auto 12px; border-radius: 50%; display: grid; place-items: center; background: #4A2370; color: #FFB81C; font: 700 2.8rem var(--j-font); box-shadow: 0 0 0 7px #EFE9F7; }
+    #panel { min-height: 92px; padding: 10px 12px; border-radius: 20px; background: #F8F7FB; border: 2px solid #E6E2EE; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+    #formula { font: 700 1.4rem var(--j-font); color: #4A2370; overflow-wrap: anywhere; min-height: 1.7rem; }
+    #formula.hint { color: #9A8FB0; font-size: 1.05rem; font-family: var(--j-font-text); font-weight: 700; }
+    #live { font: 700 2rem var(--j-font); color: #E8A100; font-variant-numeric: tabular-nums; }
+    #live.ok { color: #14937A; }
+    .row { display: grid; gap: 10px; margin-top: 12px; }
+    #nums { grid-template-columns: repeat(4, 1fr); }
+    .ops { grid-template-columns: repeat(6, 1fr); }
+    .acts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    button.key { min-height: 62px; border: 0; border-radius: 18px; cursor: pointer; font: 700 1.7rem var(--j-font); -webkit-tap-highlight-color: transparent; box-shadow: 0 5px 0 rgba(35,27,51,.25); }
+    button.key:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 rgba(35,27,51,.25); }
+    .num { background: #1FBF9A; color: #231B33; } .num:disabled { background: #D4EFE8; color: #8CB5AB; box-shadow: none; cursor: default; }
+    .op { background: #E23B6B; color: #fff; } .par { background: #8E5BD6; color: #fff; }
+    .act { min-height: 50px; font-size: .95rem; padding: 0 4px; white-space: nowrap; background: #EFE9F7; color: #4A2370; box-shadow: 0 4px 0 #D9CCEB; border-radius: 16px; }
+    #toast { position: fixed; z-index: 12; left: 50%; top: 40%; transform: translate(-50%, -50%) scale(.6); opacity: 0; pointer-events: none; font: 700 clamp(1.8rem, 8vw, 2.8rem) var(--j-font); color: #FFB81C; background: #4A2370; padding: 12px 28px; border-radius: 26px; box-shadow: 0 14px 30px -10px rgba(0,0,0,.6); transition: all .22s; text-align: center; white-space: nowrap; }
+    #toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+</style>
 </head>
-<body>
-
-<div class="stars"></div>
-
-<div id="game-container">
-    <div id="success-overlay">
-        <div style="font-size: 60px; margin-bottom: 10px;">✨</div>
-        <h2 style="color: var(--cyan); margin: 0;">Fuziune Reușită!</h2>
-        <p style="color: var(--gold);">+20 PUNCTE ALCHIMICE</p>
+<body class="jg">
+<div class="jg-hud"><span class="jg-pill">⭐ <b id="score">0</b></span><span class="jg-pill">🏆 <b id="best">0</b></span></div>
+<div id="toast">Bravo!</div>
+<main id="card">
+    <p class="label">Ținta de atins</p>
+    <div id="target">--</div>
+    <div id="panel"><div id="formula" class="hint">Alege cifre și operații</div><div id="live">0</div></div>
+    <div class="row" id="nums"></div>
+    <div class="row ops" id="ops"></div>
+    <div class="row acts">
+        <button class="key act" id="back" type="button">⌫ Șterge</button>
+        <button class="key act" id="reset" type="button">↺ Reia</button>
+        <button class="key act" id="skip" type="button">⏭ Sari</button>
     </div>
-
-    <div class="score-row">
-        <div>SCOR: <span id="score" class="score-val">0</span></div>
-        <div>RECORD: <span id="high-score" class="high-val">0</span></div>
-    </div>
-
-    <div class="target-hud">
-        <div class="target-label">Ținta de Fuziune</div>
-        <div class="target-circle" id="target-val">--</div>
-    </div>
-
-    <div class="display-panel">
-        <div id="formula-text">---</div>
-        <div id="live-result">0</div>
-    </div>
-
-    <div class="grid" id="num-grid"></div>
-
-    <div class="grid">
-        <button class="btn-op" onclick="addPart('+')">+</button>
-        <button class="btn-op" onclick="addPart('-')">−</button>
-        <button class="btn-op" onclick="addPart('*')">×</button>
-        <button class="btn-op" onclick="addPart('/')">÷</button>
-    </div>
-
-    <div class="grid">
-        <button class="btn-op btn-paren" onclick="addPart('(')">(</button>
-        <button class="btn-op btn-paren" onclick="addPart(')')">)</button>
-        <button class="btn-reset" onclick="resetCurrent()">Resetează Formula</button>
-    </div>
-</div>
+</main>
 
 <script>
-    let score = 0;
-    let highScore = localStorage.getItem('crystalHS') || 0;
-    let target = 0;
-    let formula = [];
-    let numbers = [];
+const PAREN = true, KEY = 'lab_best';
+const $ = (id) => document.getElementById(id);
+const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+let score = 0, best = 0, target = 0, numbers = [], formula = [], used = [], solved = false;
+try { best = parseInt(localStorage.getItem(KEY) || '0', 10) || 0; } catch (e) {}
+$('best').textContent = best;
 
-    document.getElementById('high-score').innerText = highScore;
-
-    function initGame() {
-        formula = [];
-        // Generăm numere pentru nivelul 2
-        let n1 = Math.floor(Math.random() * 10) + 2;
-        let n2 = Math.floor(Math.random() * 5) + 2;
-        let n3 = Math.floor(Math.random() * 8) + 1;
-        
-        numbers = [n1, n2, n3, Math.floor(Math.random() * 9) + 1];
-        numbers.sort(() => Math.random() - 0.5);
-
-        // Stabilim o țintă rezonabilă
-        target = (n1 + n2) * n3; 
-        if(target > 150 || target < 5) target = Math.floor(Math.random() * 40) + 10;
-
-        document.getElementById('target-val').innerText = target;
-        renderNumbers();
-        updateUI();
+/* evaluator sigur (fără eval): + − × ÷ și paranteze */
+function evaluate(tokens) {
+    let i = 0;
+    const peek = () => tokens[i];
+    function expr() { let v = term(); while (peek() === '+' || peek() === '-') { const o = tokens[i++]; const r = term(); v = o === '+' ? v + r : v - r; } return v; }
+    function term() { let v = factor(); while (peek() === '*' || peek() === '/') { const o = tokens[i++]; const r = factor(); v = o === '*' ? v * r : v / r; } return v; }
+    function factor() {
+        const t = tokens[i++];
+        if (typeof t === 'number') return t;
+        if (t === '(') { const v = expr(); if (tokens[i++] !== ')') throw 0; return v; }
+        throw 0;
     }
-
-    function renderNumbers() {
-        const grid = document.getElementById('num-grid');
-        grid.innerHTML = '';
-        numbers.forEach((n, i) => {
-            const btn = document.createElement('button');
-            btn.className = 'btn-crystal';
-            btn.innerText = n;
-            btn.id = `btn-${i}`;
-            btn.onclick = () => {
-                // Nu poți pune număr după număr sau după paranteză închisă
-                let last = formula[formula.length-1];
-                if(typeof last === 'number' || last === ')') return;
-                
-                formula.push(n);
-                btn.disabled = true;
-                updateUI();
-                checkResult();
-            };
-            grid.appendChild(btn);
-        });
+    const v = expr(); if (i !== tokens.length) throw 0; return v;
+}
+const OPS = ['+', '-', '*'];
+function makeProblem() {
+    for (let t = 0; t < 200; t++) {
+        const n1 = rnd(2, 9), n2 = rnd(2, 9), n3 = rnd(2, 6), n4 = rnd(1, 9);
+        const o1 = OPS[rnd(0, 2)], o2 = OPS[rnd(0, 2)];
+        const toks = PAREN ? ['(', n1, o1, n2, ')', o2, n3] : [n1, o1, n2, o2, n3];
+        let v; try { v = evaluate(toks); } catch (e) { continue; }
+        if (Number.isInteger(v) && v >= 5 && v <= 99 && ![n1, n2, n3, n4].includes(v)) return { target: v, numbers: [n1, n2, n3, n4].sort(() => Math.random() - .5) };
     }
+    return { target: 24, numbers: [2, 3, 4, 6].sort(() => Math.random() - .5) };
+}
+function newProblem() {
+    const p = makeProblem(); target = p.target; numbers = p.numbers; formula = []; used = []; solved = false;
+    $('target').textContent = target; renderNums(); update();
+}
 
-    function addPart(p) {
-        let last = formula[formula.length-1];
-
-        // Validare de bază pentru paranteze și operatori
-        if(p === '(') {
-            if(typeof last === 'number' || last === ')') return;
-        }
-        if(p === ')') {
-            let openCount = formula.filter(x => x === '(').length;
-            let closeCount = formula.filter(x => x === ')').length;
-            if(typeof last !== 'number' && last !== ')' || openCount <= closeCount) return;
-        }
-        if(['+','-','*','/'].includes(p)) {
-            if(formula.length === 0 || (typeof last !== 'number' && last !== ')')) return;
-        }
-
-        formula.push(p);
-        updateUI();
+function renderNums() {
+    const box = $('nums'); box.innerHTML = '';
+    numbers.forEach((n, i) => {
+        const b = document.createElement('button'); b.className = 'key num'; b.type = 'button'; b.textContent = n; b.disabled = used.includes(i);
+        b.addEventListener('click', () => addNumber(n, i)); box.appendChild(b);
+    });
+}
+const isNum = (x) => typeof x === 'number';
+function addNumber(n, i) {
+    if (solved) return; const last = formula[formula.length - 1];
+    if (isNum(last) || last === ')') return;
+    formula.push(n); used.push(i); renderNums(); update(); check();
+}
+function addOp(p) {
+    if (solved) return; const last = formula[formula.length - 1];
+    if (p === '(') { if (isNum(last) || last === ')') return; }
+    else if (p === ')') { const o = formula.filter(x => x === '(').length, c = formula.filter(x => x === ')').length; if ((!isNum(last) && last !== ')') || o <= c) return; }
+    else { if (formula.length === 0 || (!isNum(last) && last !== ')')) return; }
+    formula.push(p); update();
+}
+function undo() {
+    if (solved || !formula.length) return;
+    const x = formula.pop(); if (isNum(x)) { // eliberează ultimul număr folosit
+        used.pop(); renderNums();
     }
+    update();
+}
+function resetAll() { if (solved) return; formula = []; used = []; renderNums(); update(); }
 
-    function updateUI() {
-        const fText = document.getElementById('formula-text');
-        const lRes = document.getElementById('live-result');
-        
-        fText.innerText = formula.map(x => x === '*' ? '×' : (x === '/' ? '÷' : x)).join(' ') || "Selectează elemente...";
-        
-        let res = calculateCurrent();
-        lRes.innerText = res;
-        lRes.style.color = (res === target) ? 'var(--cyan)' : 'var(--gold)';
+function current() {
+    if (!formula.length) return null;
+    const t = [...formula];
+    const open = t.filter(x => x === '(').length, close = t.filter(x => x === ')').length;
+    while (t.length && !isNum(t[t.length - 1]) && t[t.length - 1] !== ')') t.pop();
+    for (let i = 0; i < open - close; i++) t.push(')');
+    if (!t.length) return null;
+    try { return evaluate(t); } catch (e) { return null; }
+}
+function update() {
+    const f = $('formula');
+    if (!formula.length) { f.textContent = 'Alege cifre și operații'; f.classList.add('hint'); } else { f.classList.remove('hint'); f.textContent = formula.map(x => x === '*' ? '×' : x === '/' ? '÷' : x === '-' ? '−' : x).join(' '); }
+    const v = current();
+    $('live').textContent = v === null ? '0' : (Number.isInteger(v) ? v : v.toFixed(1));
+    $('live').classList.toggle('ok', v === target);
+}
+function check() {
+    const last = formula[formula.length - 1];
+    if (!(isNum(last) || last === ')')) return;
+    const o = formula.filter(x => x === '(').length, c = formula.filter(x => x === ')').length; if (o !== c) return;
+    const v = current();
+    if (v !== null && Math.abs(v - target) < 1e-9 && formula.length >= 3) {
+        solved = true; score += 20; $('score').textContent = score;
+        if (score > best) { best = score; $('best').textContent = best; try { localStorage.setItem(KEY, best); } catch (e) {} }
+        const t = $('toast'); t.innerHTML = '✨ Reușit!<br><small style="font-size:.5em">+20 puncte</small>'; t.classList.add('show');
+        setTimeout(() => { t.classList.remove('show'); newProblem(); }, 1500);
     }
+}
 
-    function calculateCurrent() {
-        if(formula.length === 0) return 0;
-        let tempFormula = [...formula];
-        
-        // Închidem parantezele neterminate pentru calculul live
-        let openCount = tempFormula.filter(x => x === '(').length;
-        let closeCount = tempFormula.filter(x => x === ')').length;
-        for(let i=0; i < (openCount - closeCount); i++) tempFormula.push(')');
-        
-        // Eliminăm operatorul de la final dacă există
-        if(['+','-','*','/','('].includes(tempFormula[tempFormula.length-1])) tempFormula.pop();
-
-        try {
-            let result = eval(tempFormula.join(''));
-            return Number.isInteger(result) ? result : result.toFixed(1);
-        } catch(e) {
-            return "Err";
-        }
-    }
-
-    function checkResult() {
-        let openCount = formula.filter(x => x === '(').length;
-        let closeCount = formula.filter(x => x === ')').length;
-        
-        if(openCount !== closeCount) return; // Paranteze neînchise
-
-        let current = calculateCurrent();
-        if(current === target) {
-            score += 20;
-            document.getElementById('score').innerText = score;
-            
-            if(score > highScore) {
-                highScore = score;
-                localStorage.setItem('crystalHS', highScore);
-                document.getElementById('high-score').innerText = highScore;
-            }
-
-            const overlay = document.getElementById('success-overlay');
-            overlay.style.display = 'flex';
-            setTimeout(() => {
-                overlay.style.display = 'none';
-                initGame();
-            }, 1500);
-        }
-    }
-
-    function resetCurrent() {
-        formula = [];
-        renderNumbers();
-        updateUI();
-    }
-
-    initGame();
+[['+', '+'], ['-', '−'], ['*', '×'], ['/', '÷']].forEach(([v, s]) => {
+    const b = document.createElement('button'); b.className = 'key op'; b.type = 'button'; b.textContent = s; b.addEventListener('click', () => addOp(v)); $('ops').appendChild(b);
+});
+if (PAREN) ['(', ')'].forEach(p => { const b = document.createElement('button'); b.className = 'key par'; b.type = 'button'; b.textContent = p; b.addEventListener('click', () => addOp(p)); $('ops').appendChild(b); });
+$('back').addEventListener('click', undo); $('reset').addEventListener('click', resetAll); $('skip').addEventListener('click', () => { if (!solved) newProblem(); });
+newProblem();
 </script>
-
 <script src="joc.js"></script>
 </body>
 </html>

@@ -1,278 +1,146 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta charset="UTF-8">
-    <title>CyberMath - Extended Mission</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
-
-        :root {
-            --neon-blue: #00f2ff;
-            --neon-pink: #ff007f;
-            --neon-green: #39ff14;
-            --bg: #050505;
-            --current-theme: #00f2ff;
-        }
-
-        body {
-            background-color: var(--bg);
-            color: white;
-            font-family: 'Orbitron', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-        }
-
-        #game-frame {
-            width: 90%;
-            max-width: 850px;
-            background: rgba(10, 10, 20, 0.95);
-            border: 3px solid var(--current-theme);
-            padding: 40px;
-            box-shadow: 0 0 40px rgba(0, 242, 255, 0.1);
-            position: relative;
-            text-align: center;
-            transition: border-color 1s ease;
-        }
-
-        .header-info {
-            display: flex;
-            justify-content: space-between;
-            color: var(--neon-pink);
-            font-size: 0.9rem;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-        }
-
-        .progress-container {
-            width: 100%;
-            height: 12px;
-            background: #111;
-            border: 1px solid #333;
-            margin-bottom: 30px;
-        }
-
-        #progress-bar {
-            width: 0%;
-            height: 100%;
-            background: var(--current-theme);
-            box-shadow: 0 0 15px var(--current-theme);
-            transition: 0.4s;
-        }
-
-        #timer-box {
-            font-size: 1.5rem;
-            color: var(--neon-green);
-            margin-bottom: 15px;
-            display: none;
-        }
-
-        .code-display {
-            background: #000;
-            border: 1px solid var(--neon-pink);
-            padding: 40px;
-            margin-bottom: 30px;
-        }
-
-        #equation { font-size: 3rem; text-shadow: 0 0 10px #fff; }
-
-        .btn-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-        }
-
-        button {
-            background: transparent;
-            border: 2px solid var(--current-theme);
-            color: var(--current-theme);
-            padding: 20px;
-            font-size: 1.8rem;
-            font-family: 'Orbitron';
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        button:hover {
-            background: var(--current-theme);
-            color: black;
-            box-shadow: 0 0 25px var(--current-theme);
-        }
-
-        #status {
-            color: var(--neon-pink);
-            margin-top: 15px;
-            height: 20px;
-            visibility: hidden;
-            font-size: 0.8rem;
-        }
-
-        .overlay {
-            display: none;
-            position: absolute;
-            inset: 0;
-            background: black;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-        }
-    </style>
 <meta name="joc-inapoi" content="clasa4.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="icon" href="LOGO.png">
 <link rel="stylesheet" href="joc.css">
+<title>Misiunea numerelor – Jocuri Logice</title>
+<style>
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body { background: linear-gradient(#2A1450, #4A2370); color: #231B33; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 70px 14px 24px; }
+    .jg-hud { position: fixed; }
+    #card { width: min(100%, 520px); background: #fff; border-radius: 32px; padding: 22px 18px 20px; box-shadow: 0 20px 44px -18px rgba(0,0,0,.65); text-align: center; position: relative; }
+    #card.shake { animation: shake .35s; }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-9px); } 75% { transform: translateX(9px); } }
+    .stage { margin: 0; font: 800 .95rem var(--j-font-text); color: #E23B6B; text-transform: uppercase; letter-spacing: .06em; min-height: 1.3em; }
+    .bar { height: 12px; border-radius: 99px; background: #EFE9F7; margin: 10px 0 4px; overflow: hidden; }
+    .bar i { display: block; height: 100%; width: 0; border-radius: 99px; background: #1FBF9A; transition: width .3s; }
+    #timerBox { display: none; margin: 6px auto 0; width: max-content; padding: 4px 16px; border-radius: 99px; background: #FFE9A8; font: 700 1.1rem var(--j-font); color: #231B33; }
+    #timerBox.low { background: #FBC9D7; color: #B82A53; }
+    #question { margin: 12px 0 18px; font: 700 clamp(2.4rem, 11vw, 3.8rem)/1.1 var(--j-font); color: #4A2370; overflow-wrap: anywhere; }
+    #options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .opt { min-height: 72px; border: 0; border-radius: 22px; font: 700 clamp(1.5rem, 7vw, 2.2rem) var(--j-font); cursor: pointer; color: #fff; box-shadow: 0 6px 0 rgba(35,27,51,.28); -webkit-tap-highlight-color: transparent; }
+    .opt:nth-child(1) { background: #6A3BA0; } .opt:nth-child(2) { background: #E8541F; } .opt:nth-child(3) { background: #8E5BD6; } .opt:nth-child(4) { background: #D9356A; }
+    .opt:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(35,27,51,.28); }
+    .opt.ok { background: #1FBF9A !important; color: #231B33; } .opt.bad { background: #9A8FB0 !important; }
+    .opt:disabled { cursor: default; }
+    #toast { position: fixed; z-index: 12; left: 50%; top: 20%; transform: translate(-50%, -50%) scale(.6); opacity: 0; pointer-events: none; font: 700 clamp(2rem, 9vw, 3.2rem) var(--j-font); color: #FFB81C; text-shadow: 0 4px 0 #4A2370; transition: all .22s; }
+    #toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+</style>
 </head>
-<body>
+<body class="jg">
+<div class="jg-hud"><span class="jg-pill">⭐ <b id="score">0</b></span><span class="jg-pill" id="livesPill">❤️ <b id="lives">3</b></span><span class="jg-pill">🏆 <b id="best">0</b></span></div>
+<div id="toast">Bravo!</div>
+<main id="card">
+    <p class="stage" id="stage"></p>
+    <div class="bar" id="barWrap"><i id="bar"></i></div>
+    <div id="timerBox">⏱ <span id="timer">30</span> s</div>
+    <h1 id="question">…</h1>
+    <div id="options"></div>
+</main>
 
-<div id="game-frame">
-    <div class="header-info">
-        <span id="sector-text">Sector: 01 - Earth Orbit</span>
-        <span>Quest: <span id="quest-num">1</span>/11</span>
-    </div>
-
-    <div class="progress-container">
-        <div id="progress-bar"></div>
-    </div>
-
-    <div id="timer-box">CORE STABILITY: <span id="timer-val">30</span>s</div>
-
-    <div class="code-display">
-        <h2 id="equation">---</h2>
-    </div>
-
-    <div id="status">ERROR: CALCULATION MISMATCH!</div>
-
-    <div class="btn-grid" id="options"></div>
-
-    <div id="level-up-ui" class="overlay">
-        <h1 style="color: var(--neon-blue);">SECTOR 01 CLEAR</h1>
-        <p>Coduri de bază descifrate. Trecere la Sectorul 02...</p>
-        <button onclick="startLevel2()" style="border-color: var(--neon-pink); color: var(--neon-pink);">WARP JUMP</button>
-    </div>
-
-    <div id="win-ui" class="overlay">
-        <h1 style="color: var(--neon-green); font-size: 3rem;">MISSION ACCOMPLISHED</h1>
-        <p>Eroule, ai asigurat controlul rețelei!</p>
-        <button onclick="location.reload()" style="border-color: var(--neon-green); color: var(--neon-green);">RESTART</button>
-    </div>
+<div class="jg-overlay" id="overlay">
+    <div class="jg-emoji" id="ovEmoji">🧮</div>
+    <h1 class="jg-title" id="ovTitle">Misiunea numerelor</h1>
+    <p class="jg-text" id="ovText">Rezolvă calculele și treci prin toate nivelurile. Atenție la ordinea operațiilor!</p>
+    <p class="jg-best" id="ovBest"></p>
+    <button class="jg-btn" id="ovBtn" type="button">Start</button>
 </div>
 
 <script>
-    let currentTaskIndex = 0;
-    let currentSector = 1;
-    let isBossMode = false;
-    let timer = 30;
-    let timerInterval;
+const CFG = { key: "misiune_best", mode: "stages", stages: [{ name: "Calcule rapide", tasks: [{ q: "55 + 45", a: 100, opts: [90, 100, 110, 105] },{ q: "150 − 60", a: 90, opts: [80, 90, 100, 70] },{ q: "7 × 8", a: 56, opts: [54, 56, 64, 48] },{ q: "81 ÷ 9", a: 9, opts: [7, 8, 9, 10] },{ q: "100 − 35", a: 65, opts: [65, 55, 75, 45] },{ q: "5 + 2 × 3", a: 11, opts: [21, 11, 10, 15] },{ q: "(10 − 2) × 5", a: 40, opts: [8, 40, 48, 50] },{ q: "20 ÷ 4 + 6", a: 11, opts: [2, 11, 10, 5] },{ q: "30 − 10 ÷ 2", a: 25, opts: [10, 25, 20, 15] },{ q: "4 × (3 + 7)", a: 40, opts: [19, 40, 25, 30] },{ q: "15 + 15 ÷ 3 − 2", a: 18, opts: [8, 18, 10, 28] }] }, { name: "Nivelul 2", tasks: [{ q: "(200 + 300) × 2", a: 1000, opts: [1000, 800, 700, 500] },{ q: "1200 − 400 ÷ 2", a: 1000, opts: [1000, 400, 800, 600] },{ q: "25 × 4 + 150", a: 250, opts: [250, 200, 300, 150] }] }, { name: "Provocarea finală", tasks: [{ q: "(50 × 4) + (25 × 2)", a: 250, opts: [250, 225, 300, 275] },{ q: "1000 ÷ 5 − 50", a: 150, opts: [150, 250, 100, 200] }], timer: 30, penalty: 5 }] };
+const $ = (id) => document.getElementById(id);
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+let score = 0, lives = 3, level = 1, idx = 0, stageIdx = 0, locked = false, timer = 0, timerId = null, best = 0, current = null, active = false;
+try { best = parseInt(localStorage.getItem(CFG.key) || '0', 10) || 0; } catch (e) {}
+$('best').textContent = best;
+if (CFG.mode !== 'endless') { $('livesPill').hidden = true; } else { $('barWrap').hidden = true; }
 
-    // NIVEL 1 - 11 Exerciții (Încălzire + Puzzle-urile tale)
-    const level1Tasks = [
-        { q: "55 + 45", a: 100, opts: [90, 100, 110, 105] },
-        { q: "150 - 60", a: 90, opts: [80, 90, 100, 70] },
-        { q: "7 × 8", a: 56, opts: [54, 56, 64, 48] },
-        { q: "81 ÷ 9", a: 9, opts: [7, 8, 9, 10] },
-        { q: "100 - 35", a: 65, opts: [65, 55, 75, 45] },
-        // Puzzle-urile introduse de tine:
-        { q: "5 + 2 × 3", a: 11, opts: [21, 11, 10, 15] },
-        { q: "(10 - 2) × 5", a: 40, opts: [8, 40, 48, 50] },
-        { q: "20 ÷ 4 + 6", a: 11, opts: [2, 11, 10, 5] },
-        { q: "30 - 10 ÷ 2", a: 25, opts: [10, 25, 20, 15] },
-        { q: "4 × (3 + 7)", a: 40, opts: [19, 40, 25, 30] },
-        { q: "15 + 15 ÷ 3 - 2", a: 18, opts: [8, 18, 10, 28] }
-    ];
+function genEndless() { return CFG.gen(level); }
+function makeOpts(answer, wrongs) { return [answer, ...wrongs].sort(() => Math.random() - .5); }
 
-    const level2Tasks = [
-        { q: "(200 + 300) × 2", a: 1000, opts: [1000, 800, 700, 500] },
-        { q: "1200 - 400 ÷ 2", a: 1000, opts: [1000, 400, 800, 600] },
-        { q: "25 × 4 + 150", a: 250, opts: [250, 200, 300, 150] }
-    ];
-
-    const bossTasks = [
-        { q: "(50 × 4) + (25 × 2)", a: 250, opts: [250, 225, 300, 275] },
-        { q: "1000 ÷ 5 - 50", a: 150, opts: [150, 250, 100, 200] }
-    ];
-
-    function loadTask() {
-        let pool, task;
-        
-        if (currentSector === 1) {
-            if (currentTaskIndex >= level1Tasks.length) {
-                showLevelUp();
-                return;
-            }
-            pool = level1Tasks;
-            document.getElementById('quest-num').textContent = currentTaskIndex + 1;
-            task = pool[currentTaskIndex];
-            updateProgress(currentTaskIndex, level1Tasks.length);
-        } else {
-            let totalL2 = level2Tasks.length + bossTasks.length;
-            if (currentTaskIndex >= totalL2) {
-                clearInterval(timerInterval);
-                document.getElementById('win-ui').style.display = 'flex';
-                return;
-            }
-            if (currentTaskIndex >= level2Tasks.length && !isBossMode) startBossMode();
-            pool = isBossMode ? bossTasks : level2Tasks;
-            let idx = isBossMode ? currentTaskIndex - level2Tasks.length : currentTaskIndex;
-            task = pool[idx];
-            updateProgress(currentTaskIndex, totalL2);
-        }
-
-        document.getElementById('equation').textContent = task.q;
-        const grid = document.getElementById('options');
-        grid.innerHTML = '';
-        task.opts.sort(() => Math.random() - 0.5).forEach(o => {
-            const b = document.createElement('button');
-            b.textContent = o;
-            b.onclick = () => check(o, task.a);
-            grid.appendChild(b);
-        });
+function loadTask() {
+    locked = false;
+    if (CFG.mode === 'endless') {
+        $('stage').textContent = CFG.levels ? 'Nivelul ' + level : '';
+        current = genEndless();
+    } else {
+        const st = CFG.stages[stageIdx];
+        if (idx >= st.tasks.length) { return stageDone(); }
+        $('stage').textContent = st.name + ' · ' + (idx + 1) + '/' + st.tasks.length;
+        $('bar').style.width = (idx / st.tasks.length * 100) + '%';
+        const t = st.tasks[idx];
+        current = { q: t.q, a: t.a, opts: [...t.opts].sort(() => Math.random() - .5) };
     }
+    $('question').textContent = current.q;
+    const box = $('options'); box.innerHTML = '';
+    current.opts.forEach(v => {
+        const b = document.createElement('button'); b.className = 'opt'; b.type = 'button'; b.textContent = v;
+        b.addEventListener('click', () => answer(b, v)); box.appendChild(b);
+    });
+}
 
-    function check(val, correct) {
-        if (val === correct) {
-            currentTaskIndex++;
-            document.getElementById('status').style.visibility = 'hidden';
-            loadTask();
+function toast(t, c) { const e = $('toast'); e.textContent = t; e.style.color = c || '#FFB81C'; e.classList.add('show'); setTimeout(() => e.classList.remove('show'), 700); }
+function saveBest() { if (score > best) { best = score; $('best').textContent = best; try { localStorage.setItem(CFG.key, best); } catch (e) {} } }
+
+function answer(btn, v) {
+    if (locked || !active) return; locked = true;
+    const ok = v === current.a;
+    document.querySelectorAll('.opt').forEach(b => { b.disabled = true; if (Number(b.textContent) === current.a) b.classList.add('ok'); });
+    if (ok) {
+        score += 10; $('score').textContent = score; saveBest(); toast(pick(['Bravo!', 'Super!', 'Excelent!', 'Corect!']));
+        if (CFG.mode === 'endless') {
+            if (CFG.levels && score % 50 === 0) { level++; toast('Nivel nou! 🚀'); }
+            setTimeout(loadTask, 650);
+        } else { idx++; setTimeout(loadTask, 650); }
+    } else {
+        btn.classList.add('bad'); $('card').classList.add('shake'); setTimeout(() => $('card').classList.remove('shake'), 400);
+        if (CFG.mode === 'endless') {
+            lives--; $('lives').textContent = Math.max(lives, 0); toast('Aproape!', '#fff');
+            setTimeout(() => { if (lives <= 0) gameOver(); else loadTask(); }, 1100);
         } else {
-            document.getElementById('status').style.visibility = 'visible';
-            document.getElementById('game-frame').style.animation = 'shake 0.2s 3';
-            setTimeout(() => document.getElementById('game-frame').style.animation = '', 600);
-            if (isBossMode) timer -= 5;
+            toast('Mai încearcă!', '#fff');
+            const st = CFG.stages[stageIdx]; if (st.timer) { timer = Math.max(0, timer - st.penalty); renderTimer(); }
+            setTimeout(() => { locked = false; document.querySelectorAll('.opt').forEach(b => { b.disabled = false; b.classList.remove('ok'); }); btn.classList.add('bad'); btn.disabled = true; }, 700);
         }
     }
+}
 
-    function updateProgress(current, total) {
-        document.getElementById('progress-bar').style.width = (current / total * 100) + '%';
-    }
+/* ---------- etape (mod cu niveluri fixe) ---------- */
+function renderTimer() { $('timer').textContent = timer; $('timerBox').classList.toggle('low', timer <= 10); }
+function startStageTimer() {
+    clearInterval(timerId); const st = CFG.stages[stageIdx];
+    if (!st.timer) { $('timerBox').style.display = 'none'; return; }
+    timer = st.timer; $('timerBox').style.display = 'block'; renderTimer();
+    timerId = setInterval(() => { timer--; renderTimer(); if (timer <= 0) { clearInterval(timerId); active = false; showOverlay('⏰', 'Timpul a trecut!', 'Mai încearcă provocarea finală. Ai ' + st.timer + ' secunde.', 'Încearcă din nou', () => { idx = 0; beginStage(); }); } }, 1000);
+}
+function beginStage() { active = true; $('overlay').hidden = true; if (CFG.mode !== 'endless') startStageTimer(); loadTask(); }
+function stageDone() {
+    clearInterval(timerId); active = false; $('bar').style.width = '100%';
+    const last = stageIdx >= CFG.stages.length - 1;
+    if (last) { showOverlay('🏆', 'Misiune îndeplinită!', 'Ai rezolvat toate problemele. Bravo, campionule!', 'Joacă din nou', restart); return; }
+    const next = CFG.stages[stageIdx + 1];
+    showOverlay('🌟', 'Nivel terminat!', 'Urmează: ' + next.name + '.', 'Continuă', () => { stageIdx++; idx = 0; beginStage(); });
+}
 
-    function showLevelUp() { document.getElementById('level-up-ui').style.display = 'flex'; }
+function showOverlay(emoji, title, text, btn, fn) {
+    $('ovEmoji').textContent = emoji; $('ovTitle').textContent = title; $('ovText').textContent = text;
+    $('ovBest').textContent = best ? '🏆 Cel mai bun scor: ' + best : '';
+    $('ovBtn').textContent = btn; $('ovBtn').onclick = fn; $('overlay').hidden = false;
+}
+function gameOver() { active = false; saveBest(); showOverlay(score >= 100 ? '🌟' : '🙂', 'Ai strâns ' + score + ' puncte!', 'Încearcă din nou, devii tot mai bun!', 'Încă o dată', restart); }
+function restart() { score = 0; lives = 3; level = 1; idx = 0; stageIdx = 0; $('score').textContent = '0'; $('lives').textContent = '3'; beginStage(); }
 
-    function startLevel2() {
-        currentSector = 2;
-        currentTaskIndex = 0;
-        document.getElementById('level-up-ui').style.display = 'none';
-        document.getElementById('sector-text').textContent = "Sector: 02 - Deep Space";
-        document.documentElement.style.setProperty('--current-theme', '#ff007f');
-        loadTask();
-    }
-
-    function startBossMode() {
-        isBossMode = true;
-        document.getElementById('timer-box').style.display = 'block';
-        document.documentElement.style.setProperty('--current-theme', '#39ff14');
-        timerInterval = setInterval(() => {
-            timer--;
-            document.getElementById('timer-val').textContent = timer;
-            if (timer <= 0) { clearInterval(timerInterval); location.reload(); }
-        }, 1000);
-    }
-
-    loadTask();
+$('ovBtn').onclick = restart;
+$('ovBest').textContent = best ? '🏆 Cel mai bun scor: ' + best : '';
 </script>
-<style> @keyframes shake { 0% { transform: translate(5px); } 50% { transform: translate(-5px); border-color: red; } 100% { transform: translate(0); } } </style>
 <script src="joc.js"></script>
 </body>
 </html>

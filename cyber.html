@@ -9,199 +9,220 @@
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
 <link rel="icon" href="LOGO.png">
 <link rel="stylesheet" href="joc.css">
-<title>Cucerește planetele – Jocuri Logice</title>
+<title>Cucerirea planetelor – Jocuri Logice</title>
 <style>
     * { box-sizing: border-box; }
     html, body { height: 100%; }
-    body { background: #2A1450; color: #fff; overflow: hidden; touch-action: none; }
+    body { margin: 0; background: #2A1450; color: #fff; overflow: hidden; touch-action: none; }
     canvas { display: block; position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; }
-    #ui-bottom { position: fixed; z-index: 30; left: 0; right: 0; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); display: flex; justify-content: center; pointer-events: none; }
-    #btn-power { pointer-events: auto; min-height: 54px; padding: 0 28px; border: 0; border-radius: 999px; background: rgba(255,255,255,.18); color: rgba(255,255,255,.6); font: 700 1.1rem var(--j-font); cursor: default; box-shadow: inset 0 0 0 2px rgba(255,255,255,.25); }
-    #btn-power.ready { background: #FFB81C; color: #231B33; cursor: pointer; box-shadow: 0 6px 0 #C99A10; animation: bump 1s infinite alternate; }
-    @keyframes bump { to { transform: scale(1.06); } }
-    #toast { position: fixed; z-index: 25; left: 0; right: 0; top: 64px; text-align: center; font: 700 1rem var(--j-font-text); color: #FFE08A; pointer-events: none; padding: 0 16px; }
+    .jg-hud { gap: 8px; }
+    #ui-bottom { position: fixed; z-index: 10; left: 0; right: 0; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); display: flex; justify-content: center; pointer-events: none; }
+    #btn-power { pointer-events: auto; min-height: 56px; padding: 0 28px; border: 0; border-radius: 999px; cursor: pointer; font: 700 1.15rem var(--j-font);
+        background: #6A3BA0; color: #cdbbe6; box-shadow: 0 6px 0 #3B1D63; }
+    #btn-power:disabled { opacity: .85; cursor: default; }
+    #btn-power.ready { background: #FFB81C; color: #231B33; box-shadow: 0 6px 0 #C99A10; animation: pulse 0.9s infinite alternate; }
+    #btn-power.ready:active { transform: translateY(4px); box-shadow: 0 2px 0 #C99A10; }
+    @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.07); } }
+    #tip { position: fixed; z-index: 8; left: 0; right: 0; bottom: calc(92px + env(safe-area-inset-bottom, 0px)); text-align: center; font: 700 .95rem var(--j-font-text); color: #D9CCEB; pointer-events: none; padding: 0 16px; }
 </style>
 </head>
 <body class="jg">
-<div class="jg-hud"><span class="jg-pill">🌍 Nivel <b id="level-val">1</b></span><span class="jg-pill">⚡ <b id="energy-val">0</b>%</span></div>
-<div id="toast"></div>
+<div class="jg-hud"><span class="jg-pill">🪐 Nivel <b id="level-val">1</b></span><span class="jg-pill">⚡ <b id="energy-val">0</b>%</span></div>
 <canvas id="gameCanvas"></canvas>
-<div id="ui-bottom"><button id="btn-power" type="button" disabled>⚡ Super șoc (50%)</button></div>
+<div id="tip">Trage de la o planetă verde spre alta ca să trimiți locuitori</div>
+<div id="ui-bottom"><button id="btn-power" type="button" disabled>☄️ Meteorit (50%)</button></div>
 
 <div class="jg-overlay" id="overlay">
-    <div class="jg-emoji" id="ovEmoji">🌍</div>
-    <h1 class="jg-title" id="ovTitle">Cucerește planetele</h1>
-    <p class="jg-text" id="ovText">Ține apăsat pe o planetă <b style="color:#1FBF9A">verde</b> și trage spre alta ca să trimiți jumătate din puncte. Cucerește toate planetele <b style="color:#FF8FA9">roșii</b>!</p>
+    <div class="jg-emoji" id="ovEmoji">🪐</div>
+    <h1 class="jg-title" id="ovTitle">Cucerirea planetelor</h1>
+    <p class="jg-text" id="ovText">Trage de la o planetă verde spre alta și trimiți jumătate din locuitori. Cucerește toate planetele roșii!</p>
     <button class="jg-btn" id="startBtn" type="button">Start</button>
 </div>
 
 <script>
 const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
 const levelVal = document.getElementById('level-val'), energyVal = document.getElementById('energy-val');
-const btnPower = document.getElementById('btn-power'), overlay = document.getElementById('overlay'), startBtn = document.getElementById('startBtn'), toast = document.getElementById('toast');
+const btnPower = document.getElementById('btn-power'), overlay = document.getElementById('overlay'), startBtn = document.getElementById('startBtn');
 
-const COLORS = { player: '#1FBF9A', enemy: '#E23B6B', neutral: '#B9A7D6' };
-let W = 0, H = 0, dpr = 1, nodes = [], particles = [], selected = null, dragging = false, drag = { x: 0, y: 0 };
-let level = 1, energy = 0, active = false, tick = 0, aiTimer = null;
+let W = 0, H = 0, dpr = 1, nodes = [], particles = [], beams = [], stars = [];
+let selectedNode = null, isDragging = false, dragEnd = { x: 0, y: 0 };
+let level = 1, energy = 0, gameActive = false, radarAngle = 0, aiTimer = null;
+const COL = { player: '#1FBF9A', enemy: '#E23B6B', neutral: '#B9A6D6' };
 
-function sizeCanvas() {
+function resize() {
     dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const nw = window.innerWidth, nh = window.innerHeight;
-    if (W && nodes.length) nodes.forEach(n => { n.x *= nw / W; n.y *= nh / H; });
-    W = nw; H = nh;
-    canvas.width = W * dpr; canvas.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const r = Math.max(24, Math.min(W * .075, 36));
-    nodes.forEach(n => n.radius = r);
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    stars = Array.from({ length: 50 }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.5 + .4, a: Math.random() * .5 + .25 }));
+    nodes.forEach(n => n.place());
 }
 
 class Node {
-    constructor(x, y, owner, count) { this.x = x; this.y = y; this.owner = owner; this.count = count; this.radius = Math.max(24, Math.min(W * .075, 36)); this.acc = Math.random() * 1000; }
-    draw(now) {
-        const col = COLORS[this.owner];
+    constructor(nx, ny, owner, count) { this.nx = nx; this.ny = ny; this.owner = owner; this.count = count; this.last = Date.now(); this.place(); }
+    place() { this.x = this.nx * W; this.y = this.ny * H; this.radius = Math.min(W * .085, 38); }
+    color() { return COL[this.owner]; }
+    draw() {
+        const c = this.color(), r = this.radius;
         // aură
-        ctx.globalAlpha = .18; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius + 7 + Math.sin(now / 400 + this.x) * 2, 0, 6.283); ctx.fill(); ctx.globalAlpha = 1;
+        ctx.globalAlpha = .18; ctx.fillStyle = c; ctx.beginPath(); ctx.arc(this.x, this.y, r + 8, 0, 6.283); ctx.fill(); ctx.globalAlpha = 1;
         // planetă
-        const g = ctx.createRadialGradient(this.x - this.radius * .35, this.y - this.radius * .35, 2, this.x, this.y, this.radius);
-        g.addColorStop(0, '#ffffff66'); g.addColorStop(.25, col); g.addColorStop(1, col);
-        ctx.fillStyle = col; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, 6.283); ctx.fill();
-        ctx.fillStyle = 'rgba(255,255,255,.28)'; ctx.beginPath(); ctx.arc(this.x - this.radius * .33, this.y - this.radius * .33, this.radius * .28, 0, 6.283); ctx.fill();
-        if (this === selected) { ctx.strokeStyle = '#FFB81C'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius + 5, 0, 6.283); ctx.stroke(); }
+        const g = ctx.createRadialGradient(this.x - r * .35, this.y - r * .4, r * .1, this.x, this.y, r);
+        g.addColorStop(0, '#ffffff'); g.addColorStop(.25, c); g.addColorStop(1, shade(c));
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(this.x, this.y, r, 0, 6.283); ctx.fill();
+        if (this.owner !== 'neutral') {
+            ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(this.x, this.y, r + 4, radarAngle, radarAngle + 1.4); ctx.stroke();
+        }
+        if (this === selectedNode) { ctx.strokeStyle = '#FFB81C'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(this.x, this.y, r + 7, 0, 6.283); ctx.stroke(); }
         ctx.fillStyle = this.owner === 'neutral' ? '#2A1450' : '#fff';
-        ctx.font = `700 ${this.radius * .75}px Fredoka, "Trebuchet MS", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.font = `700 ${Math.round(r * .62)}px Fredoka, "Trebuchet MS", sans-serif`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(Math.floor(this.count), this.x, this.y + 1);
+        this.update();
+    }
+    update() {
+        if (!gameActive || this.owner === 'neutral') return;
+        const now = Date.now();
+        if (now - this.last > 1000) {
+            this.count += 1; this.last = now;
+            if (this.owner === 'player' && energy < 100) { energy = Math.min(100, energy + 1); updateEnergyUI(); }
+        }
     }
 }
-
-function setToast(t) { toast.textContent = t; }
+function shade(hex) { const n = parseInt(hex.slice(1), 16); const f = .62; return `rgb(${(n >> 16) * f | 0},${(n >> 8 & 255) * f | 0},${(n & 255) * f | 0})`; }
 
 function updateEnergyUI() {
     energyVal.textContent = Math.floor(energy);
-    const ok = energy >= 50;
-    btnPower.disabled = !ok; btnPower.classList.toggle('ready', ok);
-}
-
-function placeNodes() {
-    nodes = [];
-    const portrait = H > W, padX = 50, top = 110, bottom = H - 120;
-    const r = Math.max(24, Math.min(W * .075, 36));
-    const pos = portrait ? [{ x: W / 2, y: bottom - 10 }, { x: W / 2, y: top + 10 }] : [{ x: 70, y: H / 2 }, { x: W - 70, y: H / 2 }];
-    nodes.push(new Node(pos[0].x, pos[0].y, 'player', 15));
-    nodes.push(new Node(pos[1].x, pos[1].y, 'enemy', 15 + level * 4));
-    const want = Math.min(2 + level, 8);
-    let tries = 0;
-    while (nodes.length < 2 + want && tries < 600) {
-        tries++;
-        const x = padX + Math.random() * (W - padX * 2), y = top + 40 + Math.random() * Math.max(10, bottom - top - 80);
-        if (nodes.every(n => Math.hypot(n.x - x, n.y - y) > r * 3)) nodes.push(new Node(x, y, 'neutral', 3 + Math.floor(Math.random() * 14)));
-    }
+    const ready = energy >= 50;
+    btnPower.disabled = !ready; btnPower.classList.toggle('ready', ready);
 }
 
 function initLevel() {
-    energy = 0; updateEnergyUI(); levelVal.textContent = level;
-    particles = []; selected = null; dragging = false;
-    placeNodes();
-    setToast('Cucerește toate planetele roșii!');
-    active = true; overlay.hidden = true; tick = performance.now();
-    clearInterval(aiTimer);
-    aiTimer = setInterval(aiMove, Math.max(1500, 4000 - level * 200));
+    nodes = []; beams = []; particles = []; energy = 0; updateEnergyUI();
+    levelVal.textContent = level; gameActive = true; selectedNode = null; isDragging = false;
+    const portrait = H > W;
+    const pPos = portrait ? [.5, .78] : [.1, .5], ePos = portrait ? [.5, .16] : [.9, .5];
+    nodes.push(new Node(pPos[0], pPos[1], 'player', 15));
+    nodes.push(new Node(ePos[0], ePos[1], 'enemy', 15 + level * 5));
+    const want = Math.min(2 + level, 8), r = Math.min(W * .085, 38);
+    let tries = 0;
+    while (nodes.length < 2 + want && tries++ < 400) {
+        const nx = (r * 1.6 + Math.random() * (W - r * 3.2)) / W;
+        const ny = (110 + Math.random() * (H - 300)) / H;
+        const x = nx * W, y = ny * H;
+        if (nodes.every(n => Math.hypot(n.x - x, n.y - y) > r * 3)) nodes.push(new Node(nx, ny, 'neutral', Math.floor(Math.random() * 15)));
+    }
+    scheduleAI();
 }
 
-function attack(from, to) {
-    if (!from || from === to || from.count < 2) return;
+function scheduleAI() {
+    clearTimeout(aiTimer);
+    aiTimer = setTimeout(() => {
+        if (gameActive) {
+            nodes.filter(n => n.owner === 'enemy').forEach(en => {
+                if (en.count > 12 + level) {
+                    const targets = nodes.filter(n => n.owner !== 'enemy');
+                    if (targets.length) handleAttack(en, targets[Math.floor(Math.random() * targets.length)]);
+                }
+            });
+        }
+        scheduleAI();
+    }, Math.max(1500, 4000 - level * 200));
+}
+
+function handleAttack(from, to) {
+    if (!from || !to || from === to || from.count < 2) return;
     const sent = Math.floor(from.count / 2);
     from.count -= sent;
+    beams.push({ x1: from.x, y1: from.y, x2: to.x, y2: to.y, c: from.color(), life: 1 });
     if (from.owner === to.owner) to.count += sent;
     else {
         to.count -= sent;
-        if (to.count < 0) { to.count = Math.abs(to.count); to.owner = from.owner; burst(to.x, to.y, COLORS[from.owner]); }
+        if (to.count < 0) { to.count = Math.abs(to.count); to.owner = from.owner; to.last = Date.now(); burst(to.x, to.y, from.color()); }
     }
-    checkState();
-}
-
-function aiMove() {
-    if (!active) return;
-    nodes.filter(n => n.owner === 'enemy').forEach(en => {
-        if (en.count > 12 + level) {
-            const targets = nodes.filter(n => n.owner !== 'enemy');
-            if (targets.length) attack(en, targets[Math.floor(Math.random() * targets.length)]);
-        }
-    });
+    checkGameState();
 }
 
 function usePower() {
-    if (!active || energy < 50) return;
+    if (energy < 50 || !gameActive) return;
     energy -= 50; updateEnergyUI();
     nodes.forEach(n => { if (n.owner === 'enemy') { n.count = Math.max(0, n.count - 25); burst(n.x, n.y, '#FFB81C'); } });
 }
 btnPower.addEventListener('click', usePower);
 
-function burst(x, y, color) {
-    for (let i = 0; i < 14; i++) particles.push({ x, y, color, vx: (Math.random() - .5) * 8, vy: (Math.random() - .5) * 8, life: 1 });
-}
+function burst(x, y, color) { for (let i = 0; i < 14; i++) particles.push({ x, y, color, vx: (Math.random() - .5) * 8, vy: (Math.random() - .5) * 8, life: 1 }); }
 
-function checkState() {
-    if (!active) return;
-    if (!nodes.some(n => n.owner === 'enemy')) finish(true);
-    else if (!nodes.some(n => n.owner === 'player')) finish(false);
+function checkGameState() {
+    if (!gameActive) return;
+    const enemies = nodes.filter(n => n.owner === 'enemy').length, mine = nodes.filter(n => n.owner === 'player').length;
+    if (enemies === 0) endGame(true); else if (mine === 0) endGame(false);
 }
-
-function finish(win) {
-    active = false; clearInterval(aiTimer);
+function endGame(win) {
+    gameActive = false; clearTimeout(aiTimer);
     document.getElementById('ovEmoji').textContent = win ? '🎉' : '🌑';
-    document.getElementById('ovTitle').textContent = win ? 'Bravo! Ai cucerit totul!' : 'Mai încearcă!';
-    document.getElementById('ovText').textContent = win ? 'Urmează nivelul ' + (level + 1) + ', cu mai multe planete.' : 'Planetele tale au fost cucerite. Poți să o iei de la început.';
-    if (win) level++; else level = 1;
-    startBtn.textContent = win ? 'Nivelul următor' : 'Încă o dată';
-    overlay.hidden = false;
+    document.getElementById('ovTitle').textContent = win ? 'Ai cucerit galaxia!' : 'Planetele au fost pierdute';
+    document.getElementById('ovText').textContent = win ? `Nivelul ${level} terminat. Ești gata pentru nivelul ${level + 1}?` : 'Nu-i nimic, încearcă din nou de la nivelul 1.';
+    startBtn.textContent = win ? 'Nivelul următor' : 'Încearcă din nou';
+    startBtn.dataset.win = win ? '1' : '0';
+    setTimeout(() => { overlay.hidden = false; }, 600);
 }
+startBtn.addEventListener('click', () => {
+    if (startBtn.dataset.win === '1') level++; else if (startBtn.dataset.win === '0') level = 1;
+    startBtn.dataset.win = ''; overlay.hidden = true; document.getElementById('tip').style.display = 'none';
+    initLevel();
+});
 
-function pointAt(x, y, owner) { return nodes.find(n => Math.hypot(n.x - x, n.y - y) < n.radius + 12 && (!owner || n.owner === owner)); }
-
+/* control cu pointer: funcționează la fel pe touch și mouse */
+function nodeAt(x, y, pad) { return nodes.find(n => Math.hypot(n.x - x, n.y - y) < n.radius + pad); }
 canvas.addEventListener('pointerdown', (e) => {
-    if (!active) return;
-    const n = pointAt(e.clientX, e.clientY, 'player');
-    if (n) { selected = n; dragging = true; drag = { x: e.clientX, y: e.clientY }; canvas.setPointerCapture(e.pointerId); }
+    if (!gameActive) return;
+    const n = nodeAt(e.clientX, e.clientY, 14);
+    if (n && n.owner === 'player') { selectedNode = n; isDragging = true; dragEnd = { x: e.clientX, y: e.clientY }; canvas.setPointerCapture(e.pointerId); }
 });
-canvas.addEventListener('pointermove', (e) => { if (dragging) drag = { x: e.clientX, y: e.clientY }; });
+canvas.addEventListener('pointermove', (e) => { if (isDragging) dragEnd = { x: e.clientX, y: e.clientY }; });
 canvas.addEventListener('pointerup', (e) => {
-    if (!dragging) return;
-    const target = pointAt(e.clientX, e.clientY);
-    if (target) attack(selected, target);
-    dragging = false; selected = null;
+    if (!isDragging) return;
+    const t = nodeAt(e.clientX, e.clientY, 18);
+    if (t) handleAttack(selectedNode, t);
+    isDragging = false; selectedNode = null;
 });
-canvas.addEventListener('pointercancel', () => { dragging = false; selected = null; });
+canvas.addEventListener('pointercancel', () => { isDragging = false; selectedNode = null; });
 
-function loop(now) {
-    ctx.fillStyle = '#2A1450'; ctx.fillRect(0, 0, W, H);
-    // stele
-    ctx.fillStyle = 'rgba(255,255,255,.35)';
-    for (let i = 0; i < 40; i++) ctx.fillRect((i * 97.3) % W, (i * 53.7) % H, 2, 2);
+function loop() {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#2A1450'); g.addColorStop(1, '#4A2370');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    for (const s of stars) { ctx.globalAlpha = s.a; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.283); ctx.fill(); }
+    ctx.globalAlpha = 1;
+    radarAngle += .04;
 
-    if (active) {
-        const dt = now - tick;
-        if (dt >= 1000) {
-            tick += 1000 * Math.floor(dt / 1000);
-            nodes.forEach(n => { if (n.owner !== 'neutral') { n.count += 1; if (n.owner === 'player' && energy < 100) { energy = Math.min(100, energy + 1); updateEnergyUI(); } } });
-        }
+    if (isDragging && selectedNode) {
+        ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 4; ctx.setLineDash([4, 10]); ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(selectedNode.x, selectedNode.y); ctx.lineTo(dragEnd.x, dragEnd.y); ctx.stroke(); ctx.setLineDash([]);
+        const t = nodeAt(dragEnd.x, dragEnd.y, 18);
+        if (t && t !== selectedNode) { ctx.strokeStyle = '#FFB81C'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(t.x, t.y, t.radius + 7, 0, 6.283); ctx.stroke(); }
     }
-    if (dragging && selected) {
-        ctx.strokeStyle = 'rgba(255,184,28,.9)'; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.setLineDash([2, 10]);
-        ctx.beginPath(); ctx.moveTo(selected.x, selected.y); ctx.lineTo(drag.x, drag.y); ctx.stroke(); ctx.setLineDash([]);
+    for (let i = beams.length - 1; i >= 0; i--) {
+        const b = beams[i]; b.life -= .06;
+        if (b.life <= 0) { beams.splice(i, 1); continue; }
+        ctx.globalAlpha = b.life; ctx.strokeStyle = b.c; ctx.lineWidth = 6; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(b.x1, b.y1); ctx.lineTo(b.x1 + (b.x2 - b.x1) * (1 - b.life * .5), b.y1 + (b.y2 - b.y1) * (1 - b.life * .5)); ctx.stroke();
     }
+    ctx.globalAlpha = 1;
     for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= .03;
         if (p.life <= 0) { particles.splice(i, 1); continue; }
         ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, 6.283); ctx.fill();
     }
     ctx.globalAlpha = 1;
-    nodes.forEach(n => n.draw(now));
+    nodes.forEach(n => n.draw());
     requestAnimationFrame(loop);
 }
 
-startBtn.addEventListener('click', initLevel);
-window.addEventListener('resize', sizeCanvas);
-window.addEventListener('orientationchange', () => setTimeout(sizeCanvas, 200));
-sizeCanvas(); placeNodes(); requestAnimationFrame(loop);
+window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', () => setTimeout(resize, 200));
+resize(); initLevel(); gameActive = false; // pregătește un tablou frumos în spatele ecranului de start
+loop();
 </script>
 <script src="joc.js"></script>
 </body>

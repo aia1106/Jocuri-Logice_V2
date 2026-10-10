@@ -1,153 +1,92 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta charset="UTF-8">
-    <title>Serele Stelare - Math Garden</title>
-    <style>
-        body {
-            margin: 0;
-            background: linear-gradient(180deg, #050520 0%, #200530 100%);
-            color: #fff;
-            font-family: 'Segoe UI', sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-        }
-        #garden {
-            position: relative;
-            width: 100%;
-            height: 60%;
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            padding-bottom: 50px;
-        }
-        .flower {
-            font-size: 100px;
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            filter: drop-shadow(0 0 20px #f0f);
-        }
-        #ui-panel {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 30px;
-            padding: 20px;
-            text-align: center;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            width: 80%;
-            max-width: 400px;
-        }
-        .goal-text { font-size: 24px; margin-bottom: 10px; color: #0ff; }
-        .current-text { font-size: 40px; font-weight: bold; margin-bottom: 20px; text-shadow: 0 0 10px #fff; }
-        .btn-container { display: flex; justify-content: center; gap: 20px; }
-        .math-btn {
-            background: linear-gradient(135deg, #f0f, #70f);
-            border: none;
-            color: white;
-            padding: 15px 25px;
-            font-size: 20px;
-            font-weight: bold;
-            border-radius: 15px;
-            cursor: pointer;
-            box-shadow: 0 5px 15px rgba(255, 0, 255, 0.4);
-            transition: transform 0.1s;
-        }
-        .math-btn:active { transform: scale(0.9); }
-        .message { margin-top: 15px; font-style: italic; min-height: 24px; color: #ff0; }
-        .reset-btn { margin-top: 10px; background: none; border: 1px solid #fff; color: #fff; cursor: pointer; border-radius: 5px; }
-    </style>
 <meta name="joc-inapoi" content="clasa0.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="icon" href="LOGO.png">
 <link rel="stylesheet" href="joc.css">
+<title>Floarea de lumină – Jocuri Logice</title>
+<style>
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body { background: linear-gradient(#2A1450, #4A2370 70%, #1FBF9A 100%); min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 70px 12px 24px; color: #231B33; }
+    .jg-hud { position: fixed; }
+    #garden { height: clamp(150px, 26dvh, 230px); display: flex; align-items: flex-end; justify-content: center; }
+    #flower { font-size: clamp(5rem, 22vw, 8rem); line-height: 1; transition: transform .4s, filter .4s; filter: drop-shadow(0 0 22px rgba(255,184,28,.7)); transform-origin: bottom center; }
+    #card { width: min(100%, 460px); background: #fff; border-radius: 32px; padding: 20px 16px 18px; text-align: center; box-shadow: 0 20px 44px -18px rgba(0,0,0,.65); }
+    .label { margin: 0; font: 800 .9rem var(--j-font-text); color: #5B5270; text-transform: uppercase; letter-spacing: .07em; }
+    #target { font: 700 3rem/1.1 var(--j-font); color: #4A2370; }
+    #current { margin: 6px auto 10px; width: max-content; min-width: 120px; padding: 6px 24px; border-radius: 20px; background: #F8F7FB; border: 2px solid #E6E2EE; font: 700 2.4rem var(--j-font); color: #E8A100; font-variant-numeric: tabular-nums; }
+    #current.full { color: #14937A; }
+    .bar { height: 12px; border-radius: 99px; background: #EFE9F7; overflow: hidden; margin: 0 auto 14px; max-width: 320px; }
+    .bar i { display: block; height: 100%; width: 0; background: #FFB81C; border-radius: 99px; transition: width .3s; }
+    #btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .add { min-height: 72px; border: 0; border-radius: 22px; font: 700 2rem var(--j-font); cursor: pointer; color: #fff; box-shadow: 0 6px 0 rgba(35,27,51,.28); -webkit-tap-highlight-color: transparent; }
+    .add:nth-child(1) { background: #E8541F; } .add:nth-child(2) { background: #8E5BD6; }
+    .add:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(35,27,51,.28); }
+    #msg { min-height: 1.6em; margin: 12px 0 8px; font: 800 1.05rem var(--j-font-text); color: #4A2370; }
+    .clear { min-height: 46px; padding: 0 22px; border: 0; border-radius: 999px; background: #EFE9F7; color: #4A2370; font: 700 1rem var(--j-font); cursor: pointer; box-shadow: 0 4px 0 #D9CCEB; }
+    .stages { display: flex; gap: 8px; justify-content: center; margin-top: 4px; }
+    .stages i { width: 14px; height: 14px; border-radius: 50%; background: rgba(255,255,255,.3); } .stages i.on { background: #FFB81C; }
+</style>
 </head>
-<body>
+<body class="jg">
+<div class="jg-hud"><span class="jg-pill">🌸 <b id="grown">0</b></span><span class="jg-pill">🏆 <b id="best">0</b></span></div>
+<div id="garden"><div id="flower">🌱</div></div>
+<div class="stages" id="stages"><i></i><i></i><i></i><i></i><i></i></div>
+<main id="card">
+    <p class="label">Câtă lumină îi trebuie florii?</p>
+    <div id="target">0</div>
+    <div id="current">0</div>
+    <div class="bar"><i id="fillBar"></i></div>
+    <div id="btns"><button class="add" id="b0" type="button">+ 0</button><button class="add" id="b1" type="button">+ 0</button></div>
+    <p id="msg">Hrănește floarea cu lumină!</p>
+    <button class="clear" id="clearBtn" type="button">↺ Șterge tot</button>
+</main>
 
-    <div id="garden">
-        <div id="flower" class="flower">🌱</div>
-    </div>
+<script>
+const $ = (id) => document.getElementById(id);
+const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+const STAGES = ['🌱', '🌿', '🎍', '🌸', '🌺', '✨'];
+let target = 0, current = 0, vals = [0, 0], stage = 0, grown = 0, best = 0, locked = false;
+try { best = parseInt(localStorage.getItem('flower_best') || '0', 10) || 0; } catch (e) {}
+$('best').textContent = best;
 
-    <div id="ui-panel">
-        <div class="goal-text">ȚINTĂ LUMINĂ: <span id="target-val">0</span></div>
-        <div class="current-text" id="current-val">0</div>
-        
-        <div class="btn-container">
-            <button class="math-btn" onclick="addValue(0)">+ <span id="btn-0">0</span></button>
-            <button class="math-btn" onclick="addValue(1)">+ <span id="btn-1">0</span></button>
-        </div>
-
-        <div id="msg" class="message"></div>
-        <button class="reset-btn" onclick="resetCurrent()">Șterge tot</button>
-    </div>
-
-    <script>
-        let target = 0;
-        let current = 0;
-        let btnVals = [0, 0];
-        let stage = 0;
-        const stages = ['🌱', '🌿', '🎍', '🌸', '🌺', '✨'];
-
-        function initLevel() {
-            current = 0;
-            // Generăm un target (multiplu de butoanele noastre)
-            btnVals[0] = Math.floor(Math.random() * 5) + 2; // 2-6
-            btnVals[1] = Math.floor(Math.random() * 5) + 3; // 3-7
-            
-            // Facem un target care să poată fi rezolvat (ex: 3*A + 2*B)
-            target = (btnVals[0] * (Math.floor(Math.random() * 3) + 1)) + 
-                     (btnVals[1] * (Math.floor(Math.random() * 3) + 1));
-
-            document.getElementById('target-val').innerText = target;
-            document.getElementById('btn-0').innerText = btnVals[0];
-            document.getElementById('btn-1').innerText = btnVals[1];
-            updateDisplay();
-            document.getElementById('msg').innerText = "Hrănește floarea cu lumină!";
-        }
-
-        function addValue(idx) {
-            current += btnVals[idx];
-            updateDisplay();
-
-            if (current === target) {
-                stage++;
-                if (stage >= stages.length - 1) {
-                    document.getElementById('flower').innerText = stages[stages.length - 1];
-                    document.getElementById('msg').innerText = "BRAVO! Floarea e magică!";
-                    setTimeout(() => { stage = 0; initLevel(); }, 3000);
-                } else {
-                    document.getElementById('msg').innerText = "Corect! Floarea crește!";
-                    document.getElementById('flower').innerText = stages[stage];
-                    setTimeout(initLevel, 1500);
-                }
-            } else if (current > target) {
-                document.getElementById('msg').innerText = "Prea multă lumină! S-a ofilit...";
-                document.getElementById('flower').style.filter = "grayscale(100%)";
-                setTimeout(() => {
-                    current = 0;
-                    stage = 0;
-                    document.getElementById('flower').style.filter = "drop-shadow(0 0 20px #f0f)";
-                    document.getElementById('flower').innerText = stages[0];
-                    initLevel();
-                }, 2000);
-            }
-        }
-
-        function resetCurrent() {
-            current = 0;
-            updateDisplay();
-            document.getElementById('msg').innerText = "Ai luat-o de la capăt.";
-        }
-
-        function updateDisplay() {
-            document.getElementById('current-val').innerText = current;
-            // Efect vizual de mărire la floare pe măsură ce se apropie de target
-            let scale = 1 + (current / target) * 0.5;
-            document.getElementById('flower').style.transform = `scale(${scale})`;
-        }
-
-        initLevel();
-    </script>
+function initLevel() {
+    locked = false; current = 0;
+    vals = [rnd(2, 6), rnd(3, 7)]; if (vals[0] === vals[1]) vals[1]++;
+    target = vals[0] * rnd(1, 3) + vals[1] * rnd(1, 3);       // întotdeauna se poate forma
+    $('target').textContent = target; $('b0').textContent = '+ ' + vals[0]; $('b1').textContent = '+ ' + vals[1];
+    $('flower').textContent = STAGES[stage]; $('flower').style.filter = 'drop-shadow(0 0 22px rgba(255,184,28,.7))';
+    show(); $('msg').textContent = 'Hrănește floarea cu lumină!';
+    [...$('stages').children].forEach((d, i) => d.classList.toggle('on', i < stage));
+}
+function show() {
+    $('current').textContent = current; $('current').classList.toggle('full', current === target);
+    $('fillBar').style.width = Math.min(current / target * 100, 100) + '%';
+    $('flower').style.transform = 'scale(' + (1 + Math.min(current / target, 1) * .35) + ')';
+}
+function add(i) {
+    if (locked) return; current += vals[i]; show();
+    if (current === target) {
+        locked = true; stage++; grown++; $('grown').textContent = grown;
+        if (grown > best) { best = grown; $('best').textContent = best; try { localStorage.setItem('flower_best', best); } catch (e) {} }
+        if (stage >= STAGES.length - 1) { $('flower').textContent = STAGES[STAGES.length - 1]; $('msg').textContent = 'BRAVO! Floarea e magică! ✨'; setTimeout(() => { stage = 0; initLevel(); }, 2600); }
+        else { $('msg').textContent = 'Corect! Floarea crește!'; $('flower').textContent = STAGES[stage]; setTimeout(initLevel, 1400); }
+    } else if (current > target) {
+        locked = true; $('msg').textContent = 'Prea multă lumină! Mai încearcă.';
+        $('flower').style.filter = 'grayscale(100%)';
+        setTimeout(() => { current = 0; locked = false; $('flower').style.filter = 'drop-shadow(0 0 22px rgba(255,184,28,.7))'; show(); $('msg').textContent = 'Hai din nou, tu poți!'; }, 1300);
+    }
+}
+$('b0').addEventListener('click', () => add(0)); $('b1').addEventListener('click', () => add(1));
+$('clearBtn').addEventListener('click', () => { if (locked) return; current = 0; show(); $('msg').textContent = 'Ai luat-o de la capăt.'; });
+initLevel();
+</script>
 <script src="joc.js"></script>
 </body>
 </html>

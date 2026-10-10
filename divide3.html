@@ -1,304 +1,151 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Math Ninja - Division Quest</title>
-    <style>
-        :root {
-            --neon-blue: #00d2ff;
-            --neon-purple: #9d50bb;
-            --success: #00ff88;
-            --error: #ff4b2b;
-            --dark-bg: #050505;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: var(--dark-bg);
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            color: white;
-            overflow: hidden;
-        }
-
-        /* Fundal animat */
-        .bg-glow {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, var(--neon-purple) 0%, transparent 70%);
-            filter: blur(80px);
-            opacity: 0.3;
-            z-index: -1;
-            transition: background 0.5s ease;
-        }
-
-        #game-card {
-            background: rgba(20, 20, 20, 0.85);
-            backdrop-filter: blur(20px);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 30px;
-            padding: 30px;
-            width: 90%;
-            max-width: 420px;
-            text-align: center;
-            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.8);
-            position: relative;
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .header-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 25px;
-        }
-
-        .stat-box {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 10px;
-            border-radius: 12px;
-            font-size: 0.9rem;
-            font-weight: bold;
-            border-bottom: 3px solid var(--neon-blue);
-        }
-
-        .high-score-tag {
-            grid-column: span 2;
-            color: #ffd700;
-            font-size: 0.8rem;
-            margin-top: 5px;
-        }
-
-        .question-container {
-            margin: 30px 0;
-        }
-
-        .level-indicator {
-            color: var(--neon-blue);
-            font-size: 0.8rem;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-        }
-
-        .question-text {
-            font-size: 4.5rem;
-            font-weight: 900;
-            margin: 0;
-            background: linear-gradient(to bottom, #fff 40%, #888 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 15px rgba(255,255,255,0.2));
-        }
-
-        .grid-options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        .btn-option {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            font-size: 2rem;
-            color: white;
-            border-radius: 18px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-option:hover {
-            background: var(--neon-blue);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 210, 255, 0.4);
-        }
-
-        /* Efecte de feedback */
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20% { transform: translateX(-10px); }
-            40% { transform: translateX(10px); }
-            60% { transform: translateX(-10px); }
-            80% { transform: translateX(10px); }
-        }
-
-        .wrong { animation: shake 0.4s; border-color: var(--error) !important; }
-        .correct { border-color: var(--success) !important; }
-
-        #level-banner {
-            position: absolute;
-            top: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--neon-blue);
-            padding: 5px 20px;
-            border-radius: 20px;
-            font-weight: bold;
-            display: none;
-            box-shadow: 0 0 15px var(--neon-blue);
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="joc-inapoi" content="clasa3.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="icon" href="LOGO.png">
 <link rel="stylesheet" href="joc.css">
+<title>Împărțiri pe niveluri – Jocuri Logice</title>
+<style>
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body { background: linear-gradient(#2A1450, #4A2370); color: #231B33; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 70px 14px 24px; }
+    .jg-hud { position: fixed; }
+    #card { width: min(100%, 520px); background: #fff; border-radius: 32px; padding: 22px 18px 20px; box-shadow: 0 20px 44px -18px rgba(0,0,0,.65); text-align: center; position: relative; }
+    #card.shake { animation: shake .35s; }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-9px); } 75% { transform: translateX(9px); } }
+    .stage { margin: 0; font: 800 .95rem var(--j-font-text); color: #E23B6B; text-transform: uppercase; letter-spacing: .06em; min-height: 1.3em; }
+    .bar { height: 12px; border-radius: 99px; background: #EFE9F7; margin: 10px 0 4px; overflow: hidden; }
+    .bar i { display: block; height: 100%; width: 0; border-radius: 99px; background: #1FBF9A; transition: width .3s; }
+    #timerBox { display: none; margin: 6px auto 0; width: max-content; padding: 4px 16px; border-radius: 99px; background: #FFE9A8; font: 700 1.1rem var(--j-font); color: #231B33; }
+    #timerBox.low { background: #FBC9D7; color: #B82A53; }
+    #question { margin: 12px 0 18px; font: 700 clamp(2.4rem, 11vw, 3.8rem)/1.1 var(--j-font); color: #4A2370; overflow-wrap: anywhere; }
+    #options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .opt { min-height: 72px; border: 0; border-radius: 22px; font: 700 clamp(1.5rem, 7vw, 2.2rem) var(--j-font); cursor: pointer; color: #fff; box-shadow: 0 6px 0 rgba(35,27,51,.28); -webkit-tap-highlight-color: transparent; }
+    .opt:nth-child(1) { background: #6A3BA0; } .opt:nth-child(2) { background: #E8541F; } .opt:nth-child(3) { background: #8E5BD6; } .opt:nth-child(4) { background: #D9356A; }
+    .opt:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(35,27,51,.28); }
+    .opt.ok { background: #1FBF9A !important; color: #231B33; } .opt.bad { background: #9A8FB0 !important; }
+    .opt:disabled { cursor: default; }
+    #toast { position: fixed; z-index: 12; left: 50%; top: 20%; transform: translate(-50%, -50%) scale(.6); opacity: 0; pointer-events: none; font: 700 clamp(2rem, 9vw, 3.2rem) var(--j-font); color: #FFB81C; text-shadow: 0 4px 0 #4A2370; transition: all .22s; }
+    #toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+</style>
 </head>
-<body>
+<body class="jg">
+<div class="jg-hud"><span class="jg-pill">⭐ <b id="score">0</b></span><span class="jg-pill" id="livesPill">❤️ <b id="lives">3</b></span><span class="jg-pill">🏆 <b id="best">0</b></span></div>
+<div id="toast">Bravo!</div>
+<main id="card">
+    <p class="stage" id="stage"></p>
+    <div class="bar" id="barWrap"><i id="bar"></i></div>
+    <div id="timerBox">⏱ <span id="timer">30</span> s</div>
+    <h1 id="question">…</h1>
+    <div id="options"></div>
+</main>
 
-<div class="bg-glow" id="glow"></div>
-
-<div id="game-card">
-    <div id="level-banner">NIVEL NOU! 🚀</div>
-    
-    <div class="header-stats">
-        <div class="stat-box">SCOR: <span id="score">0</span></div>
-        <div class="stat-box">VIEȚI: <span id="lives">3</span></div>
-        <div class="high-score-tag">RECORD PERSONAL: <span id="high-score">0</span></div>
-    </div>
-
-    <div class="question-container">
-        <div class="level-indicator" id="lvl-txt">Nivel 1</div>
-        <h1 class="question-text" id="q-text">12 ÷ 3</h1>
-    </div>
-
-    <div class="grid-options" id="options-grid">
-        </div>
+<div class="jg-overlay" id="overlay">
+    <div class="jg-emoji" id="ovEmoji">🚀</div>
+    <h1 class="jg-title" id="ovTitle">Împărțiri pe niveluri</h1>
+    <p class="jg-text" id="ovText">Răspunde corect și treci la nivelul următor. Ai 3 vieți!</p>
+    <p class="jg-best" id="ovBest"></p>
+    <button class="jg-btn" id="ovBtn" type="button">Start</button>
 </div>
 
 <script>
-    let score = 0;
-    let lives = 3;
-    let level = 1;
-    let correctAnswer = 0;
-    let highScore = localStorage.getItem('mathHighScore') || 0;
+const CFG = { key: 'div3_best', mode: 'endless', levels: true, gen: (lv) => {
+        const minR = 2 + (lv - 1), maxR = 10 + lv * 2, r = rnd(minR, maxR), d = rnd(2, 10), q = (r * d) + ' ÷ ' + d;
+        const wrong = [];
+        for (const off of [-1, 1, -2, 2, 3, -3, 5, -5]) { const w = r + off; if (w > 0 && w !== r && !wrong.includes(w)) wrong.push(w); if (wrong.length === 3) break; }
+        return { q, a: r, opts: makeOpts(r, wrong) };
+    } };
+const $ = (id) => document.getElementById(id);
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+let score = 0, lives = 3, level = 1, idx = 0, stageIdx = 0, locked = false, timer = 0, timerId = null, best = 0, current = null, active = false;
+try { best = parseInt(localStorage.getItem(CFG.key) || '0', 10) || 0; } catch (e) {}
+$('best').textContent = best;
+if (CFG.mode !== 'endless') { $('livesPill').hidden = true; } else { $('barWrap').hidden = true; }
 
-    const glow = document.getElementById('glow');
-    const card = document.getElementById('game-card');
-    const scoreEl = document.getElementById('score');
-    const livesEl = document.getElementById('lives');
-    const highEl = document.getElementById('high-score');
-    const qText = document.getElementById('q-text');
-    const lvlText = document.getElementById('lvl-txt');
-    const grid = document.getElementById('options-grid');
-    const banner = document.getElementById('level-banner');
+function genEndless() { return CFG.gen(level); }
+function makeOpts(answer, wrongs) { return [answer, ...wrongs].sort(() => Math.random() - .5); }
 
-    highEl.innerText = highScore;
-
-    function nextQuestion() {
-        // Logica dificultate: rezultatul crește cu nivelul
-        let minRes = 2 + (level - 1);
-        let maxRes = 10 + (level * 2);
-        
-        let result = Math.floor(Math.random() * (maxRes - minRes + 1)) + minRes;
-        let divisor = Math.floor(Math.random() * (9)) + 2;
-        let dividend = result * divisor;
-
-        correctAnswer = result;
-        qText.innerText = `${dividend} ÷ ${divisor}`;
-        lvlText.innerText = `Nivel ${level}`;
-
-        // Generare opțiuni
-        let choices = [result];
-        while(choices.length < 4) {
-            let offset = Math.floor(Math.random() * 10) - 5;
-            let wrong = result + (offset === 0 ? 3 : offset);
-            if(wrong > 0 && !choices.includes(wrong)) choices.push(wrong);
-        }
-        choices.sort(() => Math.random() - 0.5);
-
-        grid.innerHTML = '';
-        choices.forEach(val => {
-            const btn = document.createElement('button');
-            btn.className = 'btn-option';
-            btn.innerText = val;
-            btn.onclick = () => check(val);
-            grid.appendChild(btn);
-        });
+function loadTask() {
+    locked = false;
+    if (CFG.mode === 'endless') {
+        $('stage').textContent = CFG.levels ? 'Nivelul ' + level : '';
+        current = genEndless();
+    } else {
+        const st = CFG.stages[stageIdx];
+        if (idx >= st.tasks.length) { return stageDone(); }
+        $('stage').textContent = st.name + ' · ' + (idx + 1) + '/' + st.tasks.length;
+        $('bar').style.width = (idx / st.tasks.length * 100) + '%';
+        const t = st.tasks[idx];
+        current = { q: t.q, a: t.a, opts: [...t.opts].sort(() => Math.random() - .5) };
     }
+    $('question').textContent = current.q;
+    const box = $('options'); box.innerHTML = '';
+    current.opts.forEach(v => {
+        const b = document.createElement('button'); b.className = 'opt'; b.type = 'button'; b.textContent = v;
+        b.addEventListener('click', () => answer(b, v)); box.appendChild(b);
+    });
+}
 
-    function check(val) {
-        if(val === correctAnswer) {
-            score += 10;
-            scoreEl.innerText = score;
-            
-            // Verificare Level Up
-            if(score % 50 === 0) {
-                level++;
-                triggerLevelBanner();
-            }
+function toast(t, c) { const e = $('toast'); e.textContent = t; e.style.color = c || '#FFB81C'; e.classList.add('show'); setTimeout(() => e.classList.remove('show'), 700); }
+function saveBest() { if (score > best) { best = score; $('best').textContent = best; try { localStorage.setItem(CFG.key, best); } catch (e) {} } }
 
-            // Record nou?
-            if(score > highScore) {
-                highScore = score;
-                localStorage.setItem('mathHighScore', highScore);
-                highEl.innerText = highScore;
-            }
-
-            visualFeedback('success');
+function answer(btn, v) {
+    if (locked || !active) return; locked = true;
+    const ok = v === current.a;
+    document.querySelectorAll('.opt').forEach(b => { b.disabled = true; if (Number(b.textContent) === current.a) b.classList.add('ok'); });
+    if (ok) {
+        score += 10; $('score').textContent = score; saveBest(); toast(pick(['Bravo!', 'Super!', 'Excelent!', 'Corect!']));
+        if (CFG.mode === 'endless') {
+            if (CFG.levels && score % 50 === 0) { level++; toast('Nivel nou! 🚀'); }
+            setTimeout(loadTask, 650);
+        } else { idx++; setTimeout(loadTask, 650); }
+    } else {
+        btn.classList.add('bad'); $('card').classList.add('shake'); setTimeout(() => $('card').classList.remove('shake'), 400);
+        if (CFG.mode === 'endless') {
+            lives--; $('lives').textContent = Math.max(lives, 0); toast('Aproape!', '#fff');
+            setTimeout(() => { if (lives <= 0) gameOver(); else loadTask(); }, 1100);
         } else {
-            lives--;
-            livesEl.innerText = lives;
-            visualFeedback('error');
-            
-            if(lives <= 0) {
-                setTimeout(() => {
-                    alert(`Jocul s-a terminat! Ai ajuns la nivelul ${level}.\nScor final: ${score}`);
-                    reset();
-                }, 100);
-            }
+            toast('Mai încearcă!', '#fff');
+            const st = CFG.stages[stageIdx]; if (st.timer) { timer = Math.max(0, timer - st.penalty); renderTimer(); }
+            setTimeout(() => { locked = false; document.querySelectorAll('.opt').forEach(b => { b.disabled = false; b.classList.remove('ok'); }); btn.classList.add('bad'); btn.disabled = true; }, 700);
         }
     }
+}
 
-    function visualFeedback(type) {
-        if(type === 'success') {
-            glow.style.background = `radial-gradient(circle, var(--success) 0%, transparent 70%)`;
-            card.classList.add('correct');
-            setTimeout(() => {
-                card.classList.remove('correct');
-                resetGlow();
-                nextQuestion();
-            }, 400);
-        } else {
-            glow.style.background = `radial-gradient(circle, var(--error) 0%, transparent 70%)`;
-            card.classList.add('wrong');
-            setTimeout(() => {
-                card.classList.remove('wrong');
-                resetGlow();
-                nextQuestion();
-            }, 500);
-        }
-    }
+/* ---------- etape (mod cu niveluri fixe) ---------- */
+function renderTimer() { $('timer').textContent = timer; $('timerBox').classList.toggle('low', timer <= 10); }
+function startStageTimer() {
+    clearInterval(timerId); const st = CFG.stages[stageIdx];
+    if (!st.timer) { $('timerBox').style.display = 'none'; return; }
+    timer = st.timer; $('timerBox').style.display = 'block'; renderTimer();
+    timerId = setInterval(() => { timer--; renderTimer(); if (timer <= 0) { clearInterval(timerId); active = false; showOverlay('⏰', 'Timpul a trecut!', 'Mai încearcă provocarea finală. Ai ' + st.timer + ' secunde.', 'Încearcă din nou', () => { idx = 0; beginStage(); }); } }, 1000);
+}
+function beginStage() { active = true; $('overlay').hidden = true; if (CFG.mode !== 'endless') startStageTimer(); loadTask(); }
+function stageDone() {
+    clearInterval(timerId); active = false; $('bar').style.width = '100%';
+    const last = stageIdx >= CFG.stages.length - 1;
+    if (last) { showOverlay('🏆', 'Misiune îndeplinită!', 'Ai rezolvat toate problemele. Bravo, campionule!', 'Joacă din nou', restart); return; }
+    const next = CFG.stages[stageIdx + 1];
+    showOverlay('🌟', 'Nivel terminat!', 'Urmează: ' + next.name + '.', 'Continuă', () => { stageIdx++; idx = 0; beginStage(); });
+}
 
-    function resetGlow() {
-        glow.style.background = `radial-gradient(circle, var(--neon-purple) 0%, transparent 70%)`;
-    }
+function showOverlay(emoji, title, text, btn, fn) {
+    $('ovEmoji').textContent = emoji; $('ovTitle').textContent = title; $('ovText').textContent = text;
+    $('ovBest').textContent = best ? '🏆 Cel mai bun scor: ' + best : '';
+    $('ovBtn').textContent = btn; $('ovBtn').onclick = fn; $('overlay').hidden = false;
+}
+function gameOver() { active = false; saveBest(); showOverlay(score >= 100 ? '🌟' : '🙂', 'Ai strâns ' + score + ' puncte!', 'Încearcă din nou, devii tot mai bun!', 'Încă o dată', restart); }
+function restart() { score = 0; lives = 3; level = 1; idx = 0; stageIdx = 0; $('score').textContent = '0'; $('lives').textContent = '3'; beginStage(); }
 
-    function triggerLevelBanner() {
-        banner.style.display = 'block';
-        setTimeout(() => banner.style.display = 'none', 1500);
-    }
-
-    function reset() {
-        score = 0;
-        lives = 3;
-        level = 1;
-        scoreEl.innerText = "0";
-        livesEl.innerText = "3";
-        nextQuestion();
-    }
-
-    // Pornim prima întrebare
-    nextQuestion();
+$('ovBtn').onclick = restart;
+$('ovBest').textContent = best ? '🏆 Cel mai bun scor: ' + best : '';
 </script>
-
 <script src="joc.js"></script>
 </body>
 </html>

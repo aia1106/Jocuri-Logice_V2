@@ -310,3 +310,12 @@ button.btn { font-family: inherit; font-size: 1rem; cursor: pointer; }
 .end-area h3 { font-size: 1.8rem; }
 .panel .final-time { font-family: var(--font-titlu); font-weight: 700; font-size: 3.4rem; color: var(--plum); margin: 4px 0 !important; }
 .send-status { font-size: .95rem; }
+
+/* RETHEME-EXTRA: reguli pentru paginile vechi */
+main.legacy .grid { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; grid-gap: 8px !important; max-width: 100%; }
+main.legacy .grid .cell { padding: 14px 2px !important; font-size: clamp(.8rem, 3.2vw, 1.05rem); overflow-wrap: anywhere; }
+main.legacy iframe { width: 100%; min-height: 70vh; border: 0; border-radius: 16px; }
+main.legacy { overflow-x: clip; }
+main.legacy td input { padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent; }
+main.legacy td { font-size: clamp(1.4rem, 7vw, 2rem); }
+main.legacy td input { font-size: clamp(1.4rem, 7vw, 2rem); }

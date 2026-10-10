@@ -1,229 +1,217 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Cyber Math Sniper V2</title>
-    <style>
-        body {
-            margin: 0;
-            background: #020208;
-            color: #fff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
-            cursor: none;
-        }
-        #hud {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
-            display: flex;
-            justify-content: space-between;
-            pointer-events: none;
-            z-index: 100;
-        }
-        .stat {
-            background: rgba(0, 255, 255, 0.05);
-            border: 2px solid #0ff;
-            padding: 15px 25px;
-            font-size: 24px;
-            font-weight: bold;
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
-        }
-        #mission {
-            position: absolute;
-            bottom: 40px;
-            width: 100%;
-            text-align: center;
-            font-size: 28px;
-            color: #f0f;
-            text-shadow: 0 0 15px #f0f;
-            font-weight: bold;
-            pointer-events: none;
-        }
-        canvas { display: block; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="joc-inapoi" content="clasa1.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="icon" href="LOGO.png">
 <link rel="stylesheet" href="joc.css">
+<title>Bule cu adunări – Jocuri Logice</title>
+<style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #2A1450; overflow: hidden; touch-action: none; color: #fff; }
+    canvas#game { display: block; position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; }
+    #mission { position: fixed; z-index: 10; left: 50%; transform: translateX(-50%); top: calc(62px + env(safe-area-inset-top, 0px)); display: flex; align-items: center; gap: 12px;
+        padding: 8px 22px; border-radius: 22px; background: #fff; color: #4A2370; font: 700 clamp(1.2rem, 5.2vw, 1.8rem)/1.2 var(--j-font); box-shadow: 0 8px 20px -10px rgba(0,0,0,.6); pointer-events: none; white-space: nowrap; }
+    #mission b { color: #E23B6B; font-size: 1.15em; }
+    #shapeModel { width: 52px; height: 52px; }
+    #toast { position: fixed; z-index: 12; left: 50%; top: 42%; transform: translate(-50%, -50%) scale(.6); opacity: 0; pointer-events: none; font: 700 clamp(2.2rem, 10vw, 3.6rem) var(--j-font); color: #FFB81C; text-shadow: 0 4px 0 #4A2370; transition: all .22s; }
+    #toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+</style>
 </head>
-<body>
+<body class="jg">
+<div class="jg-hud"><span class="jg-pill">⭐ <b id="score">0</b></span><span class="jg-pill" id="livesPill">❤️ <b id="lives">3</b></span><span class="jg-pill">🏆 <b id="best">0</b></span></div>
+<div id="mission"><span id="missionText"></span><canvas id="shapeModel" width="104" height="104" hidden></canvas></div>
+<div id="toast">Bravo!</div>
+<canvas id="game"></canvas>
 
-<div id="hud">
-    <div class="stat" style="color: #0ff;">SCOR: <span id="score">0</span></div>
-    <div class="stat" style="border-color: #f00; color: #f00;">HP: <span id="hp">100%</span></div>
+<div class="jg-overlay" id="overlay">
+    <div class="jg-emoji" id="ovEmoji">🎯</div>
+    <h1 class="jg-title" id="ovTitle">Bule cu adunări</h1>
+    <p class="jg-text" id="ovText">Atinge bula care are rezultatul cerut, înainte să se termine timpul!</p>
+    <p class="jg-best" id="ovBest"></p>
+    <button class="jg-btn" id="startBtn" type="button">Start</button>
 </div>
-<div id="mission">ELIMINĂ REZULTATUL: <span id="target-num">?</span></div>
-
-<canvas id="gameCanvas"></canvas>
-
-
 
 <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const scoreEl = document.getElementById('score');
-    const hpEl = document.getElementById('hp');
-    const targetNumEl = document.getElementById('target-num');
+const CFG = { key: 'bule_add_best', motion: 'static', timed: 6000, lives: true, points: 10, speed: 0 };
+const $ = (id) => document.getElementById(id);
+const canvas = $('game'), ctx = canvas.getContext('2d');
+const PALETTE = [['#E23B6B', '#fff'], ['#1FBF9A', '#231B33'], ['#FFB81C', '#231B33'], ['#8E5BD6', '#fff'], ['#E8541F', '#fff']];
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+let W = 0, H = 0, R = 46, k = 1, score = 0, lives = 3, active = false, items = [], particles = [], answer = null, best = 0, stars = [], last = 0, roundTimer = 0;
+try { best = parseInt(localStorage.getItem(CFG.key) || '0', 10) || 0; } catch (e) {}
+$('best').textContent = best;
+if (!CFG.lives) $('livesPill').hidden = true;
 
-    let score = 0;
-    let hp = 100;
-    let currentTargetNum = 0;
-    let targets = [];
-    let mouse = { x: 0, y: 0 };
-    let flash = 0;
-    const colors = ['#0ff', '#f0f', '#0f0', '#ff0'];
+function setup() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    k = Math.min(W, H) / 560; R = Math.max(34, Math.min(62, Math.min(W, H) * .11));
+    stars = Array.from({ length: 55 }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.6 + .4, a: Math.random() * .5 + .25 }));
+    items.forEach(it => { it.r = R; it.x = Math.max(R, Math.min(W - R, it.x)); it.y = Math.min(it.y, H - R); });
+    if (!active) render();
+}
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
 
-    class Target {
-        constructor(isCorrectForce = false) {
-            this.radius = 60;
-            this.x = Math.random() * (canvas.width - 150) + 75;
-            this.y = Math.random() * (canvas.height - 300) + 150;
-            this.timer = 6000; // 6 secunde - TIMP MĂRIT
-            this.maxTimer = 6000;
-            this.isCorrect = isCorrectForce;
-            this.color = colors[Math.floor(Math.random() * colors.length)];
-            
-            if(this.isCorrect) {
-                let a = Math.floor(Math.random() * (currentTargetNum + 1));
-                this.text = `${a} + ${currentTargetNum - a}`;
-            } else {
-                let wrong;
-                do { wrong = Math.floor(Math.random() * 10) + 1; } while (wrong === currentTargetNum);
-                this.text = `${wrong} + 0`;
-            }
-        }
+/* ---------- forme ---------- */
+function shapePath(c, type, r) {
+    c.beginPath();
+    if (type === 'cerc') c.arc(0, 0, r, 0, 6.283);
+    else if (type === 'pătrat') c.rect(-r * .88, -r * .88, r * 1.76, r * 1.76);
+    else if (type === 'triunghi') { c.moveTo(0, -r); c.lineTo(r * .98, r * .78); c.lineTo(-r * .98, r * .78); c.closePath(); }
+    else if (type === 'hexagon') { for (let i = 0; i < 6; i++) c.lineTo(r * Math.cos(i * Math.PI / 3), r * Math.sin(i * Math.PI / 3)); c.closePath(); }
+}
+function drawShape(c, type, x, y, r, fill, rot) {
+    c.save(); c.translate(x, y); c.rotate(rot || 0);
+    shapePath(c, type, r); c.fillStyle = fill; c.fill();
+    c.lineWidth = Math.max(3, r * .1); c.strokeStyle = 'rgba(255,255,255,.85)'; c.stroke();
+    c.restore();
+}
 
-        draw() {
-            ctx.save();
-            // Efect de umbră/glow
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = this.color;
-            
-            // Cercul exterior (fără cruce la mijloc)
-            ctx.strokeStyle = this.color;
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.stroke();
+/* ---------- runde ---------- */
+function uniq(correct, list, min, max, n) {
+    const out = [];
+    for (const v of list) if (v !== correct && v >= min && v <= max && !out.includes(v)) { out.push(v); if (out.length === n) return out; }
+    for (let d = 1; out.length < n && d < 90; d++) for (const v of [correct + d, correct - d]) if (v !== correct && v >= min && v <= max && !out.includes(v) && out.length < n) out.push(v);
+    return out;
+}
+function makeRound() {
+    const t = rnd(2, 10), a = rnd(0, t), correct = a + ' + ' + (t - a);
+    const wrong = [];
+    while (wrong.length < 2) { const x = rnd(1, 9), y = rnd(0, 10 - x), s = x + y; if (s !== t && !wrong.some(w => w.s === s)) wrong.push({ s, label: x + ' + ' + y }); }
+    return { mission: 'Caută rezultatul: <b>' + t + '</b>', answer: t, items: [{ label: correct, correct: true }, ...wrong.map(w => ({ label: w.label, correct: false }))].sort(() => Math.random() - .5) };
+}
 
-            // Bara de timp circulară (se consumă pe măsură ce trece timpul)
-            ctx.beginPath();
-            ctx.lineWidth = 2;
-            ctx.arc(this.x, this.y, this.radius + 8, 0, (Math.PI * 2) * (this.timer / this.maxTimer));
-            ctx.stroke();
-
-            // Textul exercițiului - Acum FOARTE vizibil
-            ctx.fillStyle = "#fff";
-            ctx.font = "bold 28px Arial";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.shadowBlur = 5;
-            ctx.shadowColor = "#000";
-            ctx.fillText(this.text, this.x, this.y);
-            ctx.restore();
-        }
-    }
-
-    function generateMission() {
-        currentTargetNum = Math.floor(Math.random() * 10) + 1;
-        targetNumEl.innerText = currentTargetNum;
-        targets = [];
-        // Generăm ținta corectă
-        targets.push(new Target(true));
-        // Adăugăm 2 ținte greșite
-        for(let i=0; i<2; i++) targets.push(new Target(false));
-    }
-
-    window.addEventListener('mousemove', e => { 
-        mouse.x = e.clientX; 
-        mouse.y = e.clientY; 
+function placeItems(specs) {
+    items = [];
+    const pad = R + 6, top = 150 * Math.max(.75, k), bottom = H - R - 14;
+    specs.forEach((s, i) => {
+        const [fill, ink] = PALETTE[i % PALETTE.length];
+        const it = { ...s, r: R, fill, ink, rot: 0, rotV: (Math.random() - .5) * .03, life: CFG.timed || 0 };
+        let tries = 0;
+        do {
+            it.x = pad + Math.random() * Math.max(1, W - pad * 2);
+            it.y = CFG.motion === 'fall' ? -R - i * R * 2.6 : top + Math.random() * Math.max(1, bottom - top);
+            tries++;
+        } while (CFG.motion !== 'fall' && tries < 80 && items.some(o => Math.hypot(o.x - it.x, o.y - it.y) < R * 2.15));
+        const a = Math.random() * 6.283, v = (CFG.speed || 0) * k;
+        it.vx = Math.cos(a) * v; it.vy = Math.sin(a) * v;
+        if (CFG.motion === 'fall') { it.vx = 0; it.vy = (CFG.speed || 50) * k; }
+        items.push(it);
     });
+}
+function newRound() {
+    const r = makeRound();
+    answer = r.answer;
+    $('missionText').innerHTML = r.mission;
+    if (r.model) { const m = $('shapeModel'), mc = m.getContext('2d'); m.hidden = false; mc.clearRect(0, 0, 104, 104); drawShape(mc, r.model, 52, 54, 32, '#E23B6B', 0); }
+    placeItems(r.items);
+}
 
-    window.addEventListener('mousedown', () => {
-        flash = 4; // Efect de recul/lumină
-        let hitIdx = -1;
+/* ---------- joc ---------- */
+function startGame() {
+    score = 0; lives = 3; $('score').textContent = '0'; $('lives').textContent = '3';
+    $('overlay').hidden = true; active = true; particles = []; last = performance.now();
+    newRound(); requestAnimationFrame(loop);
+}
+$('startBtn').addEventListener('click', startGame);
 
-        targets.forEach((t, i) => {
-            let dist = Math.hypot(mouse.x - t.x, mouse.y - t.y);
-            if(dist < t.radius) hitIdx = i;
-        });
+function toast(t, c) { const e = $('toast'); e.textContent = t; e.style.color = c || '#FFB81C'; e.classList.add('show'); setTimeout(() => e.classList.remove('show'), 650); }
+function burst(x, y, color) { for (let i = 0; i < 16; i++) particles.push({ x, y, color, vx: (Math.random() - .5) * 9, vy: (Math.random() - .5) * 9, life: 1 }); }
 
-        if(hitIdx !== -1) {
-            let t = targets[hitIdx];
-            if(t.isCorrect) {
-                score += 100;
-                scoreEl.innerText = score;
-                generateMission();
-            } else {
-                hp -= 20;
-                updateHP();
-                targets.splice(hitIdx, 1);
-            }
+function loseLife() {
+    if (!CFG.lives) { score = Math.max(0, score - 5); $('score').textContent = score; return; }
+    lives--; $('lives').textContent = Math.max(lives, 0);
+    if (lives <= 0) endGame();
+}
+function endGame() {
+    active = false;
+    if (score > best) { best = score; $('best').textContent = best; try { localStorage.setItem(CFG.key, best); } catch (e) {} }
+    $('ovEmoji').textContent = score >= 100 ? '🌟' : '🙂';
+    $('ovTitle').textContent = score === 0 ? 'Hopa! Aproape!' : 'Ai strâns ' + score + ' puncte!';
+    $('ovText').textContent = 'Încearcă din nou, devii tot mai rapid!';
+    $('ovBest').textContent = '🏆 Cel mai bun scor: ' + best;
+    $('startBtn').textContent = 'Încă o dată';
+    $('overlay').hidden = false;
+}
+
+function hit(x, y) {
+    for (let i = items.length - 1; i >= 0; i--) {
+        const it = items[i];
+        if (Math.hypot(x - it.x, y - it.y) < it.r + 10) {
+            if (it.correct) { score += CFG.points; $('score').textContent = score; burst(it.x, it.y, it.fill); toast(pick(['Bravo!', 'Super!', 'Excelent!', 'Corect!'])); newRound(); }
+            else { burst(it.x, it.y, '#fff'); items.splice(i, 1); toast('Aproape!', '#fff'); loseLife(); if (active && !items.some(o => o.correct)) newRound(); }
+            return;
         }
-    });
+    }
+}
+window.addEventListener('pointerdown', (e) => { if (!active || e.target.closest('.jg-overlay, .joc-inapoi')) return; hit(e.clientX, e.clientY); });
 
-    function updateHP() {
-        hpEl.innerText = hp + "%";
-        if(hp <= 0) {
-            alert("GAME OVER! Scor: " + score);
-            hp = 100; score = 0;
-            scoreEl.innerText = "0"; hpEl.innerText = "100%";
-            generateMission();
+function loop(now) {
+    if (!active) return;
+    const dt = Math.min((now - last) / 1000, .05); last = now;
+    for (let i = items.length - 1; i >= 0; i--) {
+        const it = items[i];
+        it.rot += it.rotV;
+        if (CFG.motion === 'bounce') {
+            it.x += it.vx * dt; it.y += it.vy * dt;
+            if (it.x < it.r) { it.x = it.r; it.vx = Math.abs(it.vx); } if (it.x > W - it.r) { it.x = W - it.r; it.vx = -Math.abs(it.vx); }
+            if (it.y < it.r + 110) { it.y = it.r + 110; it.vy = Math.abs(it.vy); } if (it.y > H - it.r) { it.y = H - it.r; it.vy = -Math.abs(it.vy); }
+        } else if (CFG.motion === 'fall') {
+            it.y += it.vy * dt;
+            if (it.y > H + it.r) { const wasCorrect = it.correct; items.splice(i, 1); if (wasCorrect) { toast('Prea târziu!', '#fff'); loseLife(); } if (active && items.length === 0) newRound(); }
+        }
+        if (CFG.timed) {
+            it.life -= dt * 1000;
+            if (it.life <= 0) { const wasCorrect = it.correct; items.splice(i, 1); if (wasCorrect) { toast('Timpul a trecut!', '#fff'); loseLife(); } if (active && items.length === 0) newRound(); }
         }
     }
+    if (active && items.length && !items.some(o => o.correct)) newRound();
+    render();
+    requestAnimationFrame(loop);
+}
 
-    function drawCrosshair() {
-        ctx.save();
-        ctx.strokeStyle = "#0f0";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        // Cercul vizorului
-        ctx.arc(mouse.x, mouse.y, 25, 0, Math.PI * 2);
-        // Liniile vizorului (doar la margini)
-        ctx.moveTo(mouse.x - 35, mouse.y); ctx.lineTo(mouse.x - 15, mouse.y);
-        ctx.moveTo(mouse.x + 15, mouse.y); ctx.lineTo(mouse.x + 35, mouse.y);
-        ctx.moveTo(mouse.x, mouse.y - 35); ctx.lineTo(mouse.x, mouse.y - 15);
-        ctx.moveTo(mouse.x, mouse.y + 15); ctx.lineTo(mouse.x, mouse.y + 35);
-        ctx.stroke();
-        // Punctul central
-        ctx.fillStyle = "#0f0";
-        ctx.beginPath();
-        ctx.arc(mouse.x, mouse.y, 3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+/* ---------- desen ---------- */
+function render() {
+    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#2A1450'); g.addColorStop(1, '#4A2370');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    for (const s of stars) { ctx.globalAlpha = s.a; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.283); ctx.fill(); }
+    ctx.globalAlpha = 1;
+    for (const it of items) {
+        if (it.shape) drawShape(ctx, it.shape, it.x, it.y, it.r * .92, it.fill, it.rot);
+        else {
+            const gr = ctx.createRadialGradient(it.x - it.r * .35, it.y - it.r * .4, it.r * .1, it.x, it.y, it.r);
+            gr.addColorStop(0, 'rgba(255,255,255,.85)'); gr.addColorStop(.2, it.fill); gr.addColorStop(1, it.fill);
+            ctx.fillStyle = it.fill; ctx.beginPath(); ctx.arc(it.x, it.y, it.r, 0, 6.283); ctx.fill();
+            ctx.fillStyle = 'rgba(255,255,255,.28)'; ctx.beginPath(); ctx.ellipse(it.x - it.r * .3, it.y - it.r * .38, it.r * .32, it.r * .18, -.6, 0, 6.283); ctx.fill();
+            ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.beginPath(); ctx.arc(it.x, it.y, it.r, 0, 6.283); ctx.stroke();
+            let fs = Math.round(it.r * .62); ctx.font = `700 ${fs}px Fredoka, "Trebuchet MS", sans-serif`;
+            const w = ctx.measureText(it.label).width; if (w > it.r * 1.7) { fs = Math.floor(fs * it.r * 1.7 / w); ctx.font = `700 ${fs}px Fredoka, "Trebuchet MS", sans-serif`; }
+            ctx.fillStyle = it.ink; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(it.label, it.x, it.y + 2);
+        }
+        if (CFG.timed) {   // inel de timp
+            ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+            ctx.beginPath(); ctx.arc(it.x, it.y, it.r + 9, -Math.PI / 2, -Math.PI / 2 + 6.283 * Math.max(it.life, 0) / CFG.timed); ctx.stroke();
+        }
     }
-
-    function animate() {
-        // Fundal cu efect de flash
-        ctx.fillStyle = flash > 0 ? `rgba(0, 255, 255, ${flash/10})` : "#020208";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        if(flash > 0) flash--;
-
-        targets.forEach((t, i) => {
-            t.draw();
-            t.timer -= 16;
-            if(t.timer <= 0) {
-                if(t.isCorrect) { hp -= 10; updateHP(); }
-                targets.splice(i, 1);
-                if(targets.length === 0) generateMission();
-            }
-        });
-
-        drawCrosshair();
-        requestAnimationFrame(animate);
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= .035;
+        if (p.life <= 0) { particles.splice(i, 1); continue; }
+        ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, 6.283); ctx.fill();
     }
+    ctx.globalAlpha = 1;
+}
 
-    generateMission();
-    animate();
-
-    window.addEventListener('resize', () => {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    });
+window.addEventListener('resize', setup);
+window.addEventListener('orientationchange', () => setTimeout(setup, 200));
+setup(); newRound(); render();
 </script>
 <script src="joc.js"></script>
 </body>

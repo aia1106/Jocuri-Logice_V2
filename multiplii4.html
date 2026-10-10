@@ -15,20 +15,20 @@
   
   <style>
     section {
-      background: #fffae6;
+      background: #faf5eb;
     }
     .game-box {
       display: inline-block;
-      background-color: #fff;
+      background-color: #ffffff;
       padding: 30px;
       border-radius: 15px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       margin-top: 30px;
     }
     .number {
       font-size: 32px;
       font-weight: bold;
-      color: #4CAF50;
+      color: #45b69f;
       margin-bottom: 20px;
     }
     .options {
@@ -40,28 +40,33 @@
     .option {
       padding: 10px 25px;
       font-size: 20px;
-      border: 2px solid #888;
+      border: 2px solid #888888;
       border-radius: 10px;
       cursor: pointer;
-      background-color: #95d8f5;
+      background-color: #c898f2;
       transition: background-color 0.3s;
       width: 120px;
     }
     .option.correct {
-      background-color: #a5d6a7;
-      border-color: #4CAF50;
+      background-color: #a0dbcf;
+      border-color: #45b69f;
     }
     .option.wrong {
-      background-color: #f8bbbb;
-      border-color: red;
+      background-color: #f0c3d0;
+      border-color: #e31c58;
     }
     .completed {
       margin-top: 20px;
       font-size: 18px;
       font-weight: bold;
-      color: #006400;
+      color: #0b5949;
     }
   </style>
+<style id="retheme">
+    body { font-family: "Nunito", "Segoe UI", system-ui, sans-serif !important; }
+    h1, h2, h3, button, .btn { font-family: "Fredoka", "Trebuchet MS", "Segoe UI", sans-serif; }
+    button { -webkit-tap-highlight-color: transparent; }
+</style>
 </head>
 <body>
 <a class="skip-link" href="#continut">Sari la conținut</a>
@@ -77,7 +82,7 @@
 </header>
 <main id="continut" class="legacy">
 <section>
-    <h2 style="color: #1a237e;">Găsește toți multiplii numărului!</h2>
+    <h2 style="color: #4f1a7e;">Găsește toți multiplii numărului!</h2>
 
     <div class="game-box">
       <div class="number" id="base-number">Număr: ?</div>

@@ -6,9 +6,9 @@
     <title>Mate: Înmulțiri și Împărțiri</title>
     <style>
         :root {
-            --primary: #9b59b6;
-            --success: #2ecc71;
-            --error: #e74c3c;
+            --primary: #8f52bd;
+            --success: #2eccac;
+            --error: #e73c6f;
             --bg: #fdfaff;
         }
 
@@ -31,12 +31,12 @@
             border: 4px solid var(--primary);
         }
 
-        h1 { text-align: center; color: #8e44ad; margin-bottom: 20px; }
+        h1 { text-align: center; color: #8042af; margin-bottom: 20px; }
 
         .progress-bar {
             width: 100%;
             height: 12px;
-            background: #eee;
+            background: #eeeeee;
             border-radius: 10px;
             margin-bottom: 25px;
             overflow: hidden;
@@ -45,7 +45,7 @@
         #progress-fill {
             width: 0%;
             height: 100%;
-            background: linear-gradient(90deg, #9b59b6, #2ecc71);
+            background: linear-gradient(90deg, #8f52bd, #2eccac);
             transition: width 0.4s;
         }
 
@@ -62,7 +62,7 @@
             background: #f8f9fa;
             padding: 12px;
             border-radius: 10px;
-            border: 1px solid #eee;
+            border: 1px solid #eeeeee;
         }
 
         .operatie { font-weight: bold; font-size: 1.1rem; }
@@ -72,7 +72,7 @@
             height: 40px;
             text-align: center;
             font-size: 1.2rem;
-            border: 2px solid #ddd;
+            border: 2px solid #dddddd;
             border-radius: 8px;
             outline: none;
             transition: 0.3s;
@@ -81,8 +81,8 @@
         /* Culori de stare obligatorii */
         input.corect {
             border-color: var(--success) !important;
-            background-color: #ecfdf5 !important;
-            color: #155724 !important;
+            background-color: #eefbf8 !important;
+            color: #15574a !important;
             font-weight: bold;
             pointer-events: none; /* Nu mai poate fi modificat */
         }
@@ -90,7 +90,7 @@
         input.gresit {
             border-color: var(--error) !important;
             background-color: #fff5f5 !important;
-            color: #721c24 !important;
+            color: #721c36 !important;
             animation: shake 0.3s;
         }
 
@@ -100,7 +100,7 @@
             75% { transform: translateX(5px); }
         }
 
-        .full-width { grid-column: span 2; background: #f0f7ff; }
+        .full-width { grid-column: span 2; background: #f8f4fb; }
 
         @media (max-width: 500px) {
             .exercitii-grid { grid-template-columns: 1fr; }
@@ -109,6 +109,14 @@
     </style>
 <meta name="joc-inapoi" content="clasa2.html">
 <link rel="stylesheet" href="joc.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<style id="retheme">
+    body { font-family: "Nunito", "Segoe UI", system-ui, sans-serif !important; }
+    h1, h2, h3, button, .btn { font-family: "Fredoka", "Trebuchet MS", "Segoe UI", sans-serif; }
+    button { -webkit-tap-highlight-color: transparent; }
+</style>
 </head>
 <body>
 

@@ -1,198 +1,208 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Math Ball - Multiplication Master</title>
-    <style>
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { 
-            margin: 0; background: #050510; color: white; 
-            font-family: 'Segoe UI', sans-serif; overflow: hidden; 
-            display: flex; justify-content: center; align-items: center; height: 100vh; 
-        }
-        canvas { display: block; background: radial-gradient(circle, #0f0c29 0%, #302b63 50%, #24243e 100%); }
-        #ui { position: absolute; top: 5%; width: 100%; text-align: center; pointer-events: none; z-index: 10; }
-        #question { font-size: 3.5rem; font-weight: bold; color: #ffcc00; text-shadow: 0 0 25px rgba(255, 204, 0, 0.6); }
-        #score { font-size: 1.5rem; color: #00f2ff; margin-top: 10px; }
-        #overlay { 
-            position: absolute; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.9); display: flex; flex-direction: column; 
-            justify-content: center; align-items: center; z-index: 100;
-        }
-        .btn {
-            padding: 15px 50px; font-size: 1.8rem; background: #ff8c00; color: white; 
-            border: none; border-radius: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 6px #b36200;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="joc-inapoi" content="clasa2.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="icon" href="LOGO.png">
 <link rel="stylesheet" href="joc.css">
+<title>Mingea înmulțirii – Jocuri Logice</title>
+<style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #BFE8FF; overflow: hidden; touch-action: none; }
+    canvas { display: block; position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; }
+    #question { position: fixed; z-index: 10; left: 50%; transform: translateX(-50%); top: calc(64px + env(safe-area-inset-top, 0px)); padding: 6px 26px; border-radius: 24px; background: #fff; color: #4A2370;
+        font: 700 clamp(2rem, 9vw, 3.2rem)/1.2 var(--j-font); box-shadow: 0 8px 20px -10px rgba(35,27,51,.5); white-space: nowrap; pointer-events: none; }
+    #toast { position: fixed; z-index: 12; left: 50%; top: 38%; transform: translate(-50%, -50%) scale(.6); opacity: 0; pointer-events: none; font: 700 clamp(2.4rem, 11vw, 4rem) var(--j-font); color: #FFB81C; text-shadow: 0 4px 0 #4A2370; transition: all .25s; }
+    #toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    .jg-pill { background: rgba(255,255,255,.95); }
+</style>
 </head>
-<body>
-
-<div id="ui">
-    <div id="question">? × ?</div>
-    <div id="score">Scor: 0</div>
-</div>
-
-<div id="overlay" onclick="startGame()">
-    <h1 style="color:#ff8c00; font-size: 2.5rem;">ÎNMULȚIREA NEON</h1>
-    <p>Alege răspunsul portocaliu corect!</p>
-    <button class="btn">START</button>
-</div>
-
+<body class="jg">
+<div class="jg-hud"><span class="jg-pill">⭐ <b id="score">0</b></span><span class="jg-pill">❤️ <b id="lives">3</b></span><span class="jg-pill">🏆 <b id="best">0</b></span></div>
+<div id="question">? + ?</div>
+<div id="toast">Bravo!</div>
 <canvas id="gameCanvas"></canvas>
 
+<div class="jg-overlay" id="overlay">
+    <div class="jg-emoji" id="ovEmoji">⚽</div>
+    <h1 class="jg-title" id="ovTitle">Mingea înmulțirii</h1>
+    <p class="jg-text" id="ovText">Alege rezultatul corect al înmulțirii. Ai 3 vieți!</p>
+    <p class="jg-best" id="ovBest"></p>
+    <button class="jg-btn" id="startBtn" type="button">Start</button>
+</div>
+
 <script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const questionUI = document.getElementById('question');
-const scoreUI = document.getElementById('score');
-const overlay = document.getElementById('overlay');
+const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
+const $ = (id) => document.getElementById(id);
+const BEST_KEY = 'mbx_best';
+let best = 0;
+try { best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0; } catch (e) {}
+$('best').textContent = best;
 
-let score = 0, gameActive = false, platforms = [], animationId, scale = 1;
-let currentAnswer = 0;
-
-const ball = { 
-    x: 0, y: 0, r: 20, 
-    dy: 0, jump: -16, gravity: 0.8, 
-    targetX: 0, 
-    color: "#00ff88" 
-};
+let W = 0, H = 0, scale = 1, score = 0, lives = 3, active = false, busy = false, platforms = [], currentAnswer = 0, clouds = [];
+const ball = { x: 0, y: 0, r: 22, color: '#E23B6B', mood: 'happy', shake: 0 };
 
 function setup() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    scale = Math.min(canvas.width, canvas.height) / 400;
-    ball.r = 20 * scale;
-    ball.y = canvas.height - 100 * scale;
-    ball.x = canvas.width / 2;
-    ball.targetX = ball.x;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    scale = Math.min(W, H) / 400;
+    ball.r = 22 * scale;
+    clouds = Array.from({ length: 5 }, (_, i) => ({ x: Math.random() * W, y: (0.12 + i * 0.12) * H, s: .6 + Math.random() * .8, v: .15 + Math.random() * .25 }));
+    if (!platforms.length) { ball.x = W / 2; ball.y = groundY() - ball.r; }
+    else layoutPlatforms();
+    if (!active) draw();
 }
+const groundY = () => H - 44 * scale;
+const platY = () => H - 250 * scale;
+function layoutPlatforms() {
+    const xs = [W * .2, W * .5, W * .8], pw = Math.min(110 * scale, W * .27);
+    platforms.forEach((p, i) => { p.w = pw; p.h = 50 * scale; p.x = xs[i] - pw / 2; p.y = platY(); });
+}
+
+/* ---------- întrebări ---------- */
+function uniqueWrong(correct, candidates, min, max) {
+    const out = [];
+    for (const c of candidates) { if (c !== correct && c >= min && c <= max && !out.includes(c)) out.push(c); if (out.length === 2) break; }
+    for (let d = 1; out.length < 2 && d < 40; d++) { for (const c of [correct + d, correct - d]) { if (c !== correct && c >= min && c <= max && !out.includes(c) && out.length < 2) out.push(c); } }
+    return out;
+}
+function makeQuestion() {
+    const n1 = Math.floor(Math.random() * 9) + 2, n2 = Math.floor(Math.random() * 9) + 2, p = n1 * n2;
+    return { text: n1 + ' × ' + n2 + ' = ?', answer: p, wrong: uniqueWrong(p, [p + n1, p - n1, p + n2, p - n2, p + 1, p - 1], 1, 120) };
+}
+
+function newQuestion() {
+    const q = makeQuestion();
+    currentAnswer = q.answer;
+    $('question').textContent = q.text;
+    const vals = [q.answer, ...q.wrong].sort(() => Math.random() - .5);
+    platforms = vals.map(v => ({ val: v, state: '' }));
+    layoutPlatforms();
+    busy = false;
+}
+
+/* ---------- joc ---------- */
+function startGame() {
+    score = 0; lives = 3; $('score').textContent = '0'; $('lives').textContent = '3';
+    $('overlay').hidden = true; active = true; ball.mood = 'happy'; ball.shake = 0;
+    ball.x = W / 2; ball.y = groundY() - ball.r;
+    newQuestion(); requestAnimationFrame(loop);
+}
+$('startBtn').addEventListener('click', startGame);
+
+function toast(text, color) {
+    const t = $('toast'); t.textContent = text; t.style.color = color || '#FFB81C';
+    t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 750);
+}
+
+function tween(from, to, ms, onFrame, done) {
+    const t0 = performance.now();
+    (function step(now) {
+        const p = Math.min((now - t0) / ms, 1);
+        onFrame(p);
+        if (p < 1) requestAnimationFrame(step); else done && done();
+    })(t0);
+}
+
+function pick(p) {
+    if (!active || busy) return;
+    busy = true;
+    const sx = ball.x, sy = ball.y, tx = p.x + p.w / 2, ty = p.y - ball.r;
+    tween(0, 1, 480, (k) => {
+        ball.x = sx + (tx - sx) * k;
+        ball.y = sy + (ty - sy) * k - Math.sin(k * Math.PI) * 50 * scale;
+    }, () => {
+        if (p.val === currentAnswer) {
+            score++; $('score').textContent = score; ball.mood = 'happy'; p.state = 'ok';
+            toast(['Bravo!', 'Super!', 'Excelent!', 'Foarte bine!'][score % 4]);
+            setTimeout(() => dropAndNext(), 600);
+        } else {
+            lives--; $('lives').textContent = lives; ball.mood = 'sad'; p.state = 'bad';
+            const right = platforms.find(q => q.val === currentAnswer); if (right) right.state = 'ok';
+            toast('Aproape!', '#fff');
+            setTimeout(() => { if (lives <= 0) endGame(); else dropAndNext(); }, 1300);
+        }
+    });
+}
+
+function dropAndNext() {
+    const sy = ball.y, ty = groundY() - ball.r;
+    tween(0, 1, 320, (k) => { ball.y = sy + (ty - sy) * k * k; }, () => { ball.mood = 'happy'; if (active) newQuestion(); });
+}
+
+function endGame() {
+    active = false;
+    if (score > best) { best = score; $('best').textContent = best; try { localStorage.setItem(BEST_KEY, best); } catch (e) {} }
+    $('ovEmoji').textContent = score >= 10 ? '🌟' : '🙂';
+    $('ovTitle').textContent = score === 0 ? 'Hopa! Aproape!' : 'Ai răspuns corect de ' + score + (score === 1 ? ' dată!' : ' ori!');
+    $('ovText').textContent = 'Răspunsul la ultima întrebare era ' + currentAnswer + '. Încearcă din nou!';
+    $('ovBest').textContent = '🏆 Cel mai bun scor: ' + best;
+    $('startBtn').textContent = 'Încă o dată';
+    $('overlay').hidden = false;
+}
+
+/* ---------- comenzi ---------- */
+window.addEventListener('pointerdown', (e) => {
+    if (!active || busy || e.target.closest('.jg-overlay, .joc-inapoi')) return;
+    let sel = platforms[0], md = Infinity;
+    platforms.forEach(p => { const d = Math.abs(e.clientX - (p.x + p.w / 2)); if (d < md) { md = d; sel = p; } });
+    if (sel) pick(sel);
+});
+window.addEventListener('keydown', (e) => {
+    if (!active || busy) return;
+    const map = { ArrowLeft: 0, ArrowUp: 1, ArrowRight: 2, '1': 0, '2': 1, '3': 2 };
+    if (e.key in map && platforms[map[e.key]]) { e.preventDefault(); pick(platforms[map[e.key]]); }
+});
+
+/* ---------- desen ---------- */
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
+function draw() {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#9BD8FF'); g.addColorStop(.7, '#DCCBFF'); g.addColorStop(1, '#FFD9E6');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(255,255,255,.75)';
+    clouds.forEach(c => {
+        c.x += c.v; if (c.x > W + 80) c.x = -80;
+        const s = c.s * scale * 28;
+        ctx.beginPath(); ctx.arc(c.x, c.y, s, 0, 6.283); ctx.arc(c.x + s * 1.1, c.y + s * .15, s * .8, 0, 6.283); ctx.arc(c.x - s * 1.1, c.y + s * .25, s * .7, 0, 6.283); ctx.fill();
+    });
+    // pământ
+    ctx.fillStyle = '#1FBF9A'; ctx.fillRect(0, groundY(), W, H - groundY());
+    ctx.fillStyle = '#14937A'; ctx.fillRect(0, groundY(), W, 6 * scale);
+    // platforme cu numere
+    platforms.forEach(p => {
+        const face = p.state === 'ok' ? '#1FBF9A' : p.state === 'bad' ? '#E23B6B' : '#4A2370';
+        ctx.fillStyle = 'rgba(35,27,51,.25)'; rr(p.x, p.y + 8 * scale, p.w, p.h, 16 * scale); ctx.fill();
+        ctx.fillStyle = face; rr(p.x, p.y, p.w, p.h, 16 * scale); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,.18)'; rr(p.x + 5 * scale, p.y + 4 * scale, p.w - 10 * scale, p.h * .35, 10 * scale); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(30 * scale)}px Fredoka, "Trebuchet MS", sans-serif`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(p.val, p.x + p.w / 2, p.y + p.h / 2 + 2 * scale);
+    });
+    // minge cu față
+    const r = ball.r, bx = ball.x, by = ball.y;
+    ctx.fillStyle = 'rgba(35,27,51,.2)'; ctx.beginPath(); ctx.ellipse(bx, groundY() - 2, r * .9, r * .25, 0, 0, 6.283); ctx.fill();
+    const bg = ctx.createRadialGradient(bx - r * .35, by - r * .4, r * .1, bx, by, r);
+    const base = ball.mood === 'sad' ? '#9A8FB0' : '#E23B6B';
+    bg.addColorStop(0, '#fff'); bg.addColorStop(.25, base); bg.addColorStop(1, ball.mood === 'sad' ? '#6F6585' : '#B82A53');
+    ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(bx, by, r, 0, 6.283); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(bx - r * .32, by - r * .1, r * .22, 0, 6.283); ctx.arc(bx + r * .32, by - r * .1, r * .22, 0, 6.283); ctx.fill();
+    ctx.fillStyle = '#231B33'; ctx.beginPath(); ctx.arc(bx - r * .28, by - r * .08, r * .1, 0, 6.283); ctx.arc(bx + r * .36, by - r * .08, r * .1, 0, 6.283); ctx.fill();
+    ctx.strokeStyle = '#231B33'; ctx.lineWidth = 2.4 * scale; ctx.lineCap = 'round'; ctx.beginPath();
+    if (ball.mood === 'sad') ctx.arc(bx, by + r * .6, r * .28, Math.PI + .3, -.3); else ctx.arc(bx, by + r * .15, r * .32, .25, Math.PI - .25);
+    ctx.stroke();
+}
+function loop() { draw(); requestAnimationFrame(loop); }
 
 window.addEventListener('resize', setup);
-setup();
-
-function generateQuestion() {
-    const n1 = Math.floor(Math.random() * 9) + 2; 
-    const n2 = Math.floor(Math.random() * 9) + 2;
-    currentAnswer = n1 * n2;
-    questionUI.textContent = `${n1} × ${n2} = ?`;
-    
-    platforms = [];
-    const positions = [canvas.width * 0.2, canvas.width * 0.5, canvas.width * 0.8];
-    
-    let wrong1 = currentAnswer + (Math.random() > 0.5 ? n1 : -n1);
-    let wrong2 = currentAnswer + (Math.random() > 0.5 ? n2 : -n2);
-    if (wrong1 <= 0 || wrong1 === currentAnswer) wrong1 = currentAnswer + 2;
-    if (wrong2 <= 0 || wrong2 === currentAnswer || wrong2 === wrong1) wrong2 = currentAnswer - 2;
-    
-    let answers = [currentAnswer, wrong1, wrong2];
-    answers.sort(() => Math.random() - 0.5);
-
-    positions.forEach((pos, i) => {
-        platforms.push({
-            x: pos - 55 * scale,
-            y: canvas.height - 230 * scale,
-            w: 110 * scale,
-            h: 22 * scale,
-            val: answers[i]
-        });
-    });
-}
-
-function startGame() {
-    score = 0; scoreUI.textContent = "Scor: 0";
-    gameActive = true;
-    ball.color = "#00ff88";
-    overlay.style.display = 'none';
-    generateQuestion();
-    draw();
-}
-
-function handleTouch(e) {
-    if (!gameActive || ball.dy !== 0) return;
-    const touchX = (e.type === 'touchstart') ? e.touches[0].clientX : e.clientX;
-    
-    let selected = platforms[0];
-    let minDist = Math.abs(touchX - (platforms[0].x + platforms[0].w/2));
-
-    platforms.forEach(p => {
-        let d = Math.abs(touchX - (p.x + p.w/2));
-        if(d < minDist) { minDist = d; selected = p; }
-    });
-
-    ball.targetX = selected.x + selected.w/2;
-    ball.dy = ball.jump * scale;
-    
-    setTimeout(() => {
-        if(selected.val === currentAnswer) {
-            score++;
-            scoreUI.textContent = "Scor: " + score;
-            ball.color = "#ffcc00"; 
-            setTimeout(() => { if(gameActive) ball.color = "#00ff88"; }, 600);
-            generateQuestion();
-        } else {
-            ball.color = "#ff4444"; 
-            setTimeout(gameOver, 400);
-        }
-    }, 450);
-}
-
-window.addEventListener('mousedown', handleTouch);
-window.addEventListener('touchstart', (e) => { e.preventDefault(); handleTouch(e); }, {passive: false});
-
-function draw() {
-    if(!gameActive) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Platforme
-    platforms.forEach(p => {
-        // Stil platformă (albastru închis cu contur)
-        ctx.fillStyle = "#16213e";
-        ctx.strokeStyle = "#00f2ff";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.roundRect(p.x, p.y, p.w, p.h, 8);
-        ctx.fill();
-        ctx.stroke();
-        
-        // CIFRE PORTOCALII
-        ctx.fillStyle = "#ff8c00"; // Portocaliu aprins
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = "#ff8c00";
-        ctx.font = `bold ${30 * scale}px Arial`;
-        ctx.textAlign = "center";
-        ctx.fillText(p.val, p.x + p.w / 2, p.y + p.h + 45 * scale);
-        ctx.shadowBlur = 0;
-    });
-
-    // Minge
-    ball.dy += ball.gravity * scale;
-    ball.y += ball.dy;
-    ball.x += (ball.targetX - ball.x) * 0.15;
-
-    if(ball.y > canvas.height - 60 * scale - ball.r) {
-        ball.y = canvas.height - 60 * scale - ball.r;
-        ball.dy = 0;
-    }
-
-    ctx.shadowBlur = 20;
-    ctx.shadowColor = ball.color;
-    ctx.fillStyle = ball.color;
-    ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
-    ctx.fill();
-
-    animationId = requestAnimationFrame(draw);
-}
-
-function gameOver() {
-    gameActive = false;
-    overlay.style.display = 'flex';
-    overlay.querySelector('h1').textContent = "FINAL DE JOC";
-    overlay.querySelector('p').textContent = "Scor: " + score;
-}
+window.addEventListener('orientationchange', () => setTimeout(setup, 200));
+setup(); loop();
 </script>
 <script src="joc.js"></script>
 </body>

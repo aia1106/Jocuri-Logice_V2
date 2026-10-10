@@ -1,169 +1,216 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta charset="UTF-8">
-    <title>Neon Multi-Sniper V3</title>
-    <style>
-        body { margin: 0; background: #010105; color: #fff; font-family: 'Segoe UI', sans-serif; overflow: hidden; cursor: crosshair; }
-        #ui { 
-            position: absolute; 
-            top: 20px; 
-            width: 100%; 
-            display: flex; 
-            justify-content: space-around; 
-            font-size: 28px; 
-            font-weight: bold;
-            pointer-events: none; 
-            z-index: 10;
-        }
-        .neon-blue { text-shadow: 0 0 10px #0ff, 0 0 20px #0ff; color: #0ff; }
-        .neon-pink { text-shadow: 0 0 10px #f0f, 0 0 20px #f0f; color: #f0f; }
-        #aim { 
-            position: absolute; 
-            width: 44px; height: 44px; 
-            border: 2px solid #0f0; 
-            border-radius: 50%; 
-            pointer-events: none; 
-            transform: translate(-50%, -50%); 
-            box-shadow: 0 0 15px #0f0;
-        }
-        #aim::before, #aim::after {
-            content: ''; position: absolute; background: #0f0;
-        }
-        #aim::before { width: 10px; height: 2px; top: 50%; left: -15px; }
-        #aim::after { width: 2px; height: 10px; top: -15px; left: 50%; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="joc-inapoi" content="clasa2.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="icon" href="LOGO.png">
 <link rel="stylesheet" href="joc.css">
+<title>Bule cu înmulțiri – Jocuri Logice</title>
+<style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #2A1450; overflow: hidden; touch-action: none; color: #fff; }
+    canvas#game { display: block; position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; }
+    #mission { position: fixed; z-index: 10; left: 50%; transform: translateX(-50%); top: calc(62px + env(safe-area-inset-top, 0px)); display: flex; align-items: center; gap: 12px;
+        padding: 8px 22px; border-radius: 22px; background: #fff; color: #4A2370; font: 700 clamp(1.2rem, 5.2vw, 1.8rem)/1.2 var(--j-font); box-shadow: 0 8px 20px -10px rgba(0,0,0,.6); pointer-events: none; white-space: nowrap; }
+    #mission b { color: #E23B6B; font-size: 1.15em; }
+    #shapeModel { width: 52px; height: 52px; }
+    #toast { position: fixed; z-index: 12; left: 50%; top: 42%; transform: translate(-50%, -50%) scale(.6); opacity: 0; pointer-events: none; font: 700 clamp(2.2rem, 10vw, 3.6rem) var(--j-font); color: #FFB81C; text-shadow: 0 4px 0 #4A2370; transition: all .22s; }
+    #toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+</style>
 </head>
-<body>
-
-<div id="ui">
-    <div class="neon-blue">SCOR: <span id="score">0</span></div>
-    <div id="quest" class="neon-pink">ȚINTEȘTE REZULTATUL: <span id="problem">...</span></div>
-</div>
-<div id="aim"></div>
+<body class="jg">
+<div class="jg-hud"><span class="jg-pill">⭐ <b id="score">0</b></span><span class="jg-pill" id="livesPill">❤️ <b id="lives">3</b></span><span class="jg-pill">🏆 <b id="best">0</b></span></div>
+<div id="mission"><span id="missionText"></span><canvas id="shapeModel" width="104" height="104" hidden></canvas></div>
+<div id="toast">Bravo!</div>
 <canvas id="game"></canvas>
 
+<div class="jg-overlay" id="overlay">
+    <div class="jg-emoji" id="ovEmoji">✨</div>
+    <h1 class="jg-title" id="ovTitle">Bule cu înmulțiri</h1>
+    <p class="jg-text" id="ovText">Bulele zboară! Atinge cea cu rezultatul înmulțirii.</p>
+    <p class="jg-best" id="ovBest"></p>
+    <button class="jg-btn" id="startBtn" type="button">Start</button>
+</div>
+
 <script>
-    const canvas = document.getElementById('game');
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+const CFG = { key: 'bule_mul_best', motion: 'bounce', timed: 0, lives: false, points: 10, speed: 120 };
+const $ = (id) => document.getElementById(id);
+const canvas = $('game'), ctx = canvas.getContext('2d');
+const PALETTE = [['#E23B6B', '#fff'], ['#1FBF9A', '#231B33'], ['#FFB81C', '#231B33'], ['#8E5BD6', '#fff'], ['#E8541F', '#fff']];
 
-    let score = 0;
-    let targetNum = 0;
-    let targets = [];
-    const neonColors = ['#0ff', '#f0f', '#0f0', '#ff0', '#fff', '#f00'];
+let W = 0, H = 0, R = 46, k = 1, score = 0, lives = 3, active = false, items = [], particles = [], answer = null, best = 0, stars = [], last = 0, roundTimer = 0;
+try { best = parseInt(localStorage.getItem(CFG.key) || '0', 10) || 0; } catch (e) {}
+$('best').textContent = best;
+if (!CFG.lives) $('livesPill').hidden = true;
 
-    class Target {
-        constructor(val, isCorrect) {
-            this.val = val;
-            this.r = 45;
-            this.x = Math.random() * (canvas.width - this.r * 2) + this.r;
-            this.y = Math.random() * (canvas.height - this.r * 2) + this.r;
-            
-            // VITEZA MĂRITĂ la 2.5 pentru un shooter real
-            this.speed = 2.5; 
-            this.dir = Math.random() * Math.PI * 2;
-            this.isCorrect = isCorrect;
-            
-            // Culoare aleatorie indiferent dacă e corect sau nu
-            this.color = neonColors[Math.floor(Math.random() * neonColors.length)];
-        }
+function setup() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    k = Math.min(W, H) / 560; R = Math.max(34, Math.min(62, Math.min(W, H) * .11));
+    stars = Array.from({ length: 55 }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.6 + .4, a: Math.random() * .5 + .25 }));
+    items.forEach(it => { it.r = R; it.x = Math.max(R, Math.min(W - R, it.x)); it.y = Math.min(it.y, H - R); });
+    if (!active) render();
+}
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
 
-        draw() {
-            ctx.save();
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = this.color;
-            ctx.strokeStyle = this.color;
-            ctx.lineWidth = 3;
-            
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-            ctx.stroke();
+/* ---------- forme ---------- */
+function shapePath(c, type, r) {
+    c.beginPath();
+    if (type === 'cerc') c.arc(0, 0, r, 0, 6.283);
+    else if (type === 'pătrat') c.rect(-r * .88, -r * .88, r * 1.76, r * 1.76);
+    else if (type === 'triunghi') { c.moveTo(0, -r); c.lineTo(r * .98, r * .78); c.lineTo(-r * .98, r * .78); c.closePath(); }
+    else if (type === 'hexagon') { for (let i = 0; i < 6; i++) c.lineTo(r * Math.cos(i * Math.PI / 3), r * Math.sin(i * Math.PI / 3)); c.closePath(); }
+}
+function drawShape(c, type, x, y, r, fill, rot) {
+    c.save(); c.translate(x, y); c.rotate(rot || 0);
+    shapePath(c, type, r); c.fillStyle = fill; c.fill();
+    c.lineWidth = Math.max(3, r * .1); c.strokeStyle = 'rgba(255,255,255,.85)'; c.stroke();
+    c.restore();
+}
 
-            ctx.fillStyle = "#fff";
-            ctx.font = "bold 24px Arial";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText(this.val, this.x, this.y);
-            ctx.restore();
-        }
+/* ---------- runde ---------- */
+function uniq(correct, list, min, max, n) {
+    const out = [];
+    for (const v of list) if (v !== correct && v >= min && v <= max && !out.includes(v)) { out.push(v); if (out.length === n) return out; }
+    for (let d = 1; out.length < n && d < 90; d++) for (const v of [correct + d, correct - d]) if (v !== correct && v >= min && v <= max && !out.includes(v) && out.length < n) out.push(v);
+    return out;
+}
+function makeRound() {
+    const a = rnd(2, 9), b = rnd(2, 9), p = a * b;
+    const wrong = uniq(p, [p + a, p - a, p + b, p - b, p + 1, p - 1, p + 10, p - 10], 4, 90, 4);
+    return { mission: '<b>' + a + ' × ' + b + '</b> = ?', answer: p, items: [{ label: String(p), correct: true }, ...wrong.map(w => ({ label: String(w), correct: false }))].sort(() => Math.random() - .5) };
+}
 
-        update() {
-            this.x += Math.cos(this.dir) * this.speed;
-            this.y += Math.sin(this.dir) * this.speed;
+function placeItems(specs) {
+    items = [];
+    const pad = R + 6, top = 150 * Math.max(.75, k), bottom = H - R - 14;
+    specs.forEach((s, i) => {
+        const [fill, ink] = PALETTE[i % PALETTE.length];
+        const it = { ...s, r: R, fill, ink, rot: 0, rotV: (Math.random() - .5) * .03, life: CFG.timed || 0 };
+        let tries = 0;
+        do {
+            it.x = pad + Math.random() * Math.max(1, W - pad * 2);
+            it.y = CFG.motion === 'fall' ? -R - i * R * 2.6 : top + Math.random() * Math.max(1, bottom - top);
+            tries++;
+        } while (CFG.motion !== 'fall' && tries < 80 && items.some(o => Math.hypot(o.x - it.x, o.y - it.y) < R * 2.15));
+        const a = Math.random() * 6.283, v = (CFG.speed || 0) * k;
+        it.vx = Math.cos(a) * v; it.vy = Math.sin(a) * v;
+        if (CFG.motion === 'fall') { it.vx = 0; it.vy = (CFG.speed || 50) * k; }
+        items.push(it);
+    });
+}
+function newRound() {
+    const r = makeRound();
+    answer = r.answer;
+    $('missionText').innerHTML = r.mission;
+    if (r.model) { const m = $('shapeModel'), mc = m.getContext('2d'); m.hidden = false; mc.clearRect(0, 0, 104, 104); drawShape(mc, r.model, 52, 54, 32, '#E23B6B', 0); }
+    placeItems(r.items);
+}
 
-            if(this.x < this.r || this.x > canvas.width - this.r) this.dir = Math.PI - this.dir;
-            if(this.y < this.r || this.y > canvas.height - this.r) this.dir = -this.dir;
+/* ---------- joc ---------- */
+function startGame() {
+    score = 0; lives = 3; $('score').textContent = '0'; $('lives').textContent = '3';
+    $('overlay').hidden = true; active = true; particles = []; last = performance.now();
+    newRound(); requestAnimationFrame(loop);
+}
+$('startBtn').addEventListener('click', startGame);
+
+function toast(t, c) { const e = $('toast'); e.textContent = t; e.style.color = c || '#FFB81C'; e.classList.add('show'); setTimeout(() => e.classList.remove('show'), 650); }
+function burst(x, y, color) { for (let i = 0; i < 16; i++) particles.push({ x, y, color, vx: (Math.random() - .5) * 9, vy: (Math.random() - .5) * 9, life: 1 }); }
+
+function loseLife() {
+    if (!CFG.lives) { score = Math.max(0, score - 5); $('score').textContent = score; return; }
+    lives--; $('lives').textContent = Math.max(lives, 0);
+    if (lives <= 0) endGame();
+}
+function endGame() {
+    active = false;
+    if (score > best) { best = score; $('best').textContent = best; try { localStorage.setItem(CFG.key, best); } catch (e) {} }
+    $('ovEmoji').textContent = score >= 100 ? '🌟' : '🙂';
+    $('ovTitle').textContent = score === 0 ? 'Hopa! Aproape!' : 'Ai strâns ' + score + ' puncte!';
+    $('ovText').textContent = 'Încearcă din nou, devii tot mai rapid!';
+    $('ovBest').textContent = '🏆 Cel mai bun scor: ' + best;
+    $('startBtn').textContent = 'Încă o dată';
+    $('overlay').hidden = false;
+}
+
+function hit(x, y) {
+    for (let i = items.length - 1; i >= 0; i--) {
+        const it = items[i];
+        if (Math.hypot(x - it.x, y - it.y) < it.r + 10) {
+            if (it.correct) { score += CFG.points; $('score').textContent = score; burst(it.x, it.y, it.fill); toast(pick(['Bravo!', 'Super!', 'Excelent!', 'Corect!'])); newRound(); }
+            else { burst(it.x, it.y, '#fff'); items.splice(i, 1); toast('Aproape!', '#fff'); loseLife(); if (active && !items.some(o => o.correct)) newRound(); }
+            return;
         }
     }
+}
+window.addEventListener('pointerdown', (e) => { if (!active || e.target.closest('.jg-overlay, .joc-inapoi')) return; hit(e.clientX, e.clientY); });
 
-    function newProblem() {
-        let a = Math.floor(Math.random() * 8) + 2;
-        let b = Math.floor(Math.random() * 8) + 2;
-        targetNum = a * b;
-        document.getElementById('problem').innerText = `${a} x ${b}`;
-        
-        targets = [];
-        // 1 corect
-        targets.push(new Target(targetNum, true));
-        
-        // 4 greșite pentru a umple ecranul
-        for(let i=0; i<4; i++) {
-            let wrongVal;
-            do {
-                wrongVal = Math.floor(Math.random() * 80) + 4;
-            } while (wrongVal === targetNum);
-            targets.push(new Target(wrongVal, false));
+function loop(now) {
+    if (!active) return;
+    const dt = Math.min((now - last) / 1000, .05); last = now;
+    for (let i = items.length - 1; i >= 0; i--) {
+        const it = items[i];
+        it.rot += it.rotV;
+        if (CFG.motion === 'bounce') {
+            it.x += it.vx * dt; it.y += it.vy * dt;
+            if (it.x < it.r) { it.x = it.r; it.vx = Math.abs(it.vx); } if (it.x > W - it.r) { it.x = W - it.r; it.vx = -Math.abs(it.vx); }
+            if (it.y < it.r + 110) { it.y = it.r + 110; it.vy = Math.abs(it.vy); } if (it.y > H - it.r) { it.y = H - it.r; it.vy = -Math.abs(it.vy); }
+        } else if (CFG.motion === 'fall') {
+            it.y += it.vy * dt;
+            if (it.y > H + it.r) { const wasCorrect = it.correct; items.splice(i, 1); if (wasCorrect) { toast('Prea târziu!', '#fff'); loseLife(); } if (active && items.length === 0) newRound(); }
+        }
+        if (CFG.timed) {
+            it.life -= dt * 1000;
+            if (it.life <= 0) { const wasCorrect = it.correct; items.splice(i, 1); if (wasCorrect) { toast('Timpul a trecut!', '#fff'); loseLife(); } if (active && items.length === 0) newRound(); }
         }
     }
+    if (active && items.length && !items.some(o => o.correct)) newRound();
+    render();
+    requestAnimationFrame(loop);
+}
 
-    canvas.onclick = (e) => {
-        for (let i = targets.length - 1; i >= 0; i--) {
-            let t = targets[i];
-            let d = Math.hypot(e.clientX - t.x, e.clientY - t.y);
-            if(d < t.r) {
-                if(t.isCorrect) {
-                    score += 10;
-                    document.getElementById('score').innerText = score;
-                    newProblem();
-                } else {
-                    score = Math.max(0, score - 5);
-                    document.getElementById('score').innerText = score;
-                    targets.splice(i, 1); // Eliminăm ținta greșită la click
-                }
-                break; 
-            }
+/* ---------- desen ---------- */
+function render() {
+    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#2A1450'); g.addColorStop(1, '#4A2370');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    for (const s of stars) { ctx.globalAlpha = s.a; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.283); ctx.fill(); }
+    ctx.globalAlpha = 1;
+    for (const it of items) {
+        if (it.shape) drawShape(ctx, it.shape, it.x, it.y, it.r * .92, it.fill, it.rot);
+        else {
+            const gr = ctx.createRadialGradient(it.x - it.r * .35, it.y - it.r * .4, it.r * .1, it.x, it.y, it.r);
+            gr.addColorStop(0, 'rgba(255,255,255,.85)'); gr.addColorStop(.2, it.fill); gr.addColorStop(1, it.fill);
+            ctx.fillStyle = it.fill; ctx.beginPath(); ctx.arc(it.x, it.y, it.r, 0, 6.283); ctx.fill();
+            ctx.fillStyle = 'rgba(255,255,255,.28)'; ctx.beginPath(); ctx.ellipse(it.x - it.r * .3, it.y - it.r * .38, it.r * .32, it.r * .18, -.6, 0, 6.283); ctx.fill();
+            ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.beginPath(); ctx.arc(it.x, it.y, it.r, 0, 6.283); ctx.stroke();
+            let fs = Math.round(it.r * .62); ctx.font = `700 ${fs}px Fredoka, "Trebuchet MS", sans-serif`;
+            const w = ctx.measureText(it.label).width; if (w > it.r * 1.7) { fs = Math.floor(fs * it.r * 1.7 / w); ctx.font = `700 ${fs}px Fredoka, "Trebuchet MS", sans-serif`; }
+            ctx.fillStyle = it.ink; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(it.label, it.x, it.y + 2);
         }
-    };
-
-    window.onmousemove = (e) => {
-        const aim = document.getElementById('aim');
-        aim.style.left = e.clientX + 'px';
-        aim.style.top = e.clientY + 'px';
-    };
-
-    function loop() {
-        ctx.fillStyle = "rgba(1, 1, 5, 0.2)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        targets.forEach(t => { 
-            t.update(); 
-            t.draw(); 
-        });
-        requestAnimationFrame(loop);
+        if (CFG.timed) {   // inel de timp
+            ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+            ctx.beginPath(); ctx.arc(it.x, it.y, it.r + 9, -Math.PI / 2, -Math.PI / 2 + 6.283 * Math.max(it.life, 0) / CFG.timed); ctx.stroke();
+        }
     }
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= .035;
+        if (p.life <= 0) { particles.splice(i, 1); continue; }
+        ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, 6.283); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+}
 
-    newProblem();
-    loop();
-
-    window.onresize = () => {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    };
+window.addEventListener('resize', setup);
+window.addEventListener('orientationchange', () => setTimeout(setup, 200));
+setup(); newRound(); render();
 </script>
 <script src="joc.js"></script>
 </body>

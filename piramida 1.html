@@ -6,10 +6,10 @@
     <title>Piramida Magică Auto-Generată</title>
     <style>
         :root {
-            --primary: #6c5ce7;
-            --success: #2ecc71;
-            --error: #e74c3c;
-            --bg: #f0f2f5;
+            --primary: #a65ce7;
+            --success: #2eccac;
+            --error: #e73c6f;
+            --bg: #f3f0f5;
         }
 
         body {
@@ -33,7 +33,7 @@
         }
 
         h1 { color: var(--primary); margin-bottom: 5px; }
-        p { color: #666; margin-bottom: 30px; }
+        p { color: #666666; margin-bottom: 30px; }
 
         .pyramid-container {
             display: flex;
@@ -58,14 +58,14 @@
             border-radius: 12px;
             font-size: 1.4rem;
             font-weight: bold;
-            border: 2px solid #ddd;
+            border: 2px solid #dddddd;
             transition: all 0.3s;
         }
 
         .base-cell {
-            background: #a29bfe;
+            background: #ceb6e3;
             color: white;
-            border-color: #6c5ce7;
+            border-color: #a65ce7;
         }
 
         input {
@@ -80,10 +80,10 @@
         }
 
         input.corect { color: var(--success); }
-        .cell.success-bg { border-color: var(--success); background-color: #eafaf1; }
+        .cell.success-bg { border-color: var(--success); background-color: #eafaf7; }
         
         input.gresit { color: var(--error); }
-        .cell.error-bg { border-color: var(--error); background-color: #fdedec; animation: shake 0.3s; }
+        .cell.error-bg { border-color: var(--error); background-color: #fbeef2; animation: shake 0.3s; }
 
         @keyframes shake {
             0%, 100% {transform: translateX(0);}
@@ -102,13 +102,21 @@
             cursor: pointer;
             display: none;
             font-weight: bold;
-            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+            box-shadow: 0 4px 15px rgba(46,204,172,0.3);
         }
 
-        #next-btn:hover { background: #27ae60; transform: scale(1.05); }
+        #next-btn:hover { background: #27ae93; transform: scale(1.05); }
     </style>
 <meta name="joc-inapoi" content="clasa1.html">
 <link rel="stylesheet" href="joc.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<style id="retheme">
+    body { font-family: "Nunito", "Segoe UI", system-ui, sans-serif !important; }
+    h1, h2, h3, button, .btn { font-family: "Fredoka", "Trebuchet MS", "Segoe UI", sans-serif; }
+    button { -webkit-tap-highlight-color: transparent; }
+</style>
 </head>
 <body>
 

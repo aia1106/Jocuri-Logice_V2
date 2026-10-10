@@ -9,167 +9,180 @@
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
 <link rel="icon" href="LOGO.png">
 <link rel="stylesheet" href="joc.css">
-<title>Robotul miner – Jocuri Logice</title>
+<title>Săpăturile de diamante – Jocuri Logice</title>
 <style>
     * { box-sizing: border-box; }
     html, body { height: 100%; }
+    :root { --cell-size: 36px; }
     body { background: #2A1450; color: #fff; overflow: hidden; touch-action: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
-    #game-container { --cell: 35px; position: relative; display: grid; grid-template-columns: repeat(9, var(--cell)); grid-template-rows: repeat(13, var(--cell)); border: 6px solid #6A3BA0; border-radius: 18px; overflow: hidden; background: #4A2F20; box-shadow: 0 18px 40px -16px rgba(0,0,0,.6); }
-    .cell { width: var(--cell); height: var(--cell); display: flex; align-items: center; justify-content: center; font-size: calc(var(--cell) * .55); position: relative; }
-    .dirt { background: #B07A4F; box-shadow: inset 0 0 0 1px #9A6641; }
-    .dirt::before { content: ""; position: absolute; width: 4px; height: 4px; border-radius: 50%; background: rgba(0,0,0,.15); left: 28%; top: 30%; box-shadow: 14px 10px 0 rgba(0,0,0,.12); }
-    .empty { background: #4A2F20; }
-    .crystal { background: #B07A4F; box-shadow: inset 0 0 0 1px #9A6641; }
+    #hud { display: flex; gap: 10px; }
+    #game-container { position: relative; display: grid; grid-template-columns: repeat(9, var(--cell-size)); grid-template-rows: repeat(13, var(--cell-size)); background: #5B3A29; border: 6px solid #6A3BA0; border-radius: 22px; overflow: hidden; box-shadow: 0 18px 40px -16px rgba(0,0,0,.6); }
+    .cell { width: var(--cell-size); height: var(--cell-size); display: flex; align-items: center; justify-content: center; font-size: calc(var(--cell-size) * .55); }
+    .dirt { background: #C18A57; box-shadow: inset 0 0 0 1px rgba(91,58,41,.25), inset 3px 3px 0 rgba(255,255,255,.08); }
+    .empty { background: #5B3A29; }
     .crystal::after { content: '💎'; animation: pulse 1s infinite alternate; }
-    .rock::after { content: ""; width: 78%; height: 78%; border-radius: 46% 54% 50% 50%; background: radial-gradient(circle at 35% 30%, #C9C2D8, #7B7390 70%); box-shadow: 0 3px 0 rgba(0,0,0,.35); }
-    .rock { background: #4A2F20; }
-    #player { position: absolute; width: var(--cell); height: var(--cell); z-index: 10; display: flex; align-items: center; justify-content: center; font-size: calc(var(--cell) * .62); transition: left .1s ease, top .1s ease; pointer-events: none; }
-    #player::after { content: '🤖'; filter: drop-shadow(0 2px 2px rgba(0,0,0,.5)); }
-    @keyframes pulse { from { transform: scale(.8); } to { transform: scale(1.08); } }
-
-    #controls { display: grid; grid-template-columns: repeat(3, 64px); grid-template-rows: repeat(2, 64px); gap: 10px; }
-    .dpad { width: 64px; height: 64px; border: 0; border-radius: 50%; background: rgba(255,255,255,.14); color: #fff; font-size: 1.6rem; box-shadow: inset 0 0 0 2px rgba(255,255,255,.28); -webkit-tap-highlight-color: transparent; }
-    .dpad:active, .dpad.on { background: #FFB81C; color: #231B33; }
-    #btn-up { grid-column: 2; } #btn-left { grid-column: 1; grid-row: 2; } #btn-down { grid-column: 2; grid-row: 2; } #btn-right { grid-column: 3; grid-row: 2; }
-    @media (min-width: 900px) and (pointer: fine) { #controls { display: none; } }
-    .flash { animation: hurt .35s; }
-    @keyframes hurt { 40% { box-shadow: inset 0 0 40px 10px #E23B6B; } }
+    .rock::after { content: '🪨'; }
+    #player { position: absolute; width: var(--cell-size); height: var(--cell-size); z-index: 10; display: flex; align-items: center; justify-content: center; transition: left .1s ease, top .1s ease; font-size: calc(var(--cell-size) * .6); }
+    #player::before { content: ''; position: absolute; inset: 12%; border-radius: 50%; background: #1FBF9A; box-shadow: 0 0 0 3px rgba(255,255,255,.7); }
+    #player::after { content: '🤖'; position: relative; }
+    #controls { display: grid; grid-template-columns: repeat(3, 62px); grid-template-rows: repeat(2, 62px); gap: 8px; }
+    .dp { width: 62px; height: 62px; border: 0; border-radius: 50%; background: rgba(255,255,255,.92); color: #4A2370; font-size: 1.6rem; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 5px 0 #C9C2D8; -webkit-tap-highlight-color: transparent; touch-action: none; }
+    .dp:active { transform: translateY(3px); box-shadow: 0 2px 0 #C9C2D8; background: #FFB81C; }
+    #dp-up { grid-column: 2; } #dp-left { grid-column: 1; grid-row: 2; } #dp-down { grid-column: 2; grid-row: 2; } #dp-right { grid-column: 3; grid-row: 2; }
+    @media (hover: hover) and (pointer: fine) { #controls { display: none; } }
+    #bravo { position: absolute; inset: 0; z-index: 150; display: none; align-items: center; justify-content: center; background: rgba(42,20,80,.7); }
+    #bravo span { font: 700 2.2rem var(--j-font); background: #FFB81C; color: #231B33; padding: 14px 28px; border-radius: 999px; box-shadow: 0 6px 0 #C99A10; }
+    .jg-overlay { position: fixed; }
+    @keyframes pulse { from { transform: scale(.85); } to { transform: scale(1.1); } }
+    .hurt { box-shadow: inset 0 0 40px 8px rgba(226,59,107,.8), 0 18px 40px -16px rgba(0,0,0,.6) !important; }
 </style>
 </head>
 <body class="jg">
-<div class="jg-hud"><span class="jg-pill">💎 <b id="score">0</b></span><span class="jg-pill">❤️ <b id="lives">3</b></span></div>
+<div id="hud"><span class="jg-pill" style="position:static">💎 <b id="score">0</b></span><span class="jg-pill" style="position:static">❤️ <b id="lives">3</b></span></div>
 
-<div id="game-container"><div id="player"></div></div>
-
-<div id="controls" aria-label="Butoane de direcție">
-    <button class="dpad" id="btn-up" type="button" aria-label="Sus">▲</button>
-    <button class="dpad" id="btn-left" type="button" aria-label="Stânga">◀</button>
-    <button class="dpad" id="btn-down" type="button" aria-label="Jos">▼</button>
-    <button class="dpad" id="btn-right" type="button" aria-label="Dreapta">▶</button>
+<div id="game-container">
+    <div id="player"></div>
+    <div id="bravo"><span>Bravo! +200</span></div>
 </div>
 
-<div class="jg-overlay" id="victory" hidden><div class="jg-emoji">🎉</div><h1 class="jg-title">Bravo!</h1><p class="jg-text">Ai strâns toate diamantele. Urmează o nouă hartă!</p></div>
-<div class="jg-overlay" id="game-over" hidden>
-    <div class="jg-emoji">🪨</div><h1 class="jg-title">Au! Prea multe pietre</h1>
-    <p class="jg-text">Ai strâns <b id="final-score">0</b> puncte.</p>
+<div id="controls" aria-label="Butoane de mișcare">
+    <button class="dp" id="dp-up" type="button" aria-label="Sus">▲</button>
+    <button class="dp" id="dp-left" type="button" aria-label="Stânga">◀</button>
+    <button class="dp" id="dp-down" type="button" aria-label="Jos">▼</button>
+    <button class="dp" id="dp-right" type="button" aria-label="Dreapta">▶</button>
+</div>
+
+<div class="jg-overlay" id="overlay">
+    <div class="jg-emoji" id="ovEmoji">💎</div>
+    <h1 class="jg-title" id="ovTitle">Săpăturile de diamante</h1>
+    <p class="jg-text" id="ovText">Sapă prin pământ și strânge toate diamantele. Ferește-te de pietrele care cad!</p>
     <p class="jg-best" id="ovBest"></p>
-    <button class="jg-btn" id="again" type="button">Încă o dată</button>
+    <button class="jg-btn" id="startBtn" type="button">Start</button>
 </div>
 
 <script>
-const container = document.getElementById('game-container'), player = document.getElementById('player');
-const scoreEl = document.getElementById('score'), livesEl = document.getElementById('lives');
+const $ = (id) => document.getElementById(id);
+const container = $('game-container'), scoreEl = $('score'), livesEl = $('lives'), bravo = $('bravo'), overlay = $('overlay');
 const ROWS = 13, COLS = 9;
-let CELL = 35, score = 0, lives = 3, grid = [], crystalsLeft = 0, gameActive = true, playerPos = { x: 4, y: 0 }, best = 0;
+let CELL = 36, score = 0, lives = 3, grid = [], crystalsLeft = 0, gameActive = false, playerPos = { x: 4, y: 0 }, best = 0, invulnerable = false;
 try { best = parseInt(localStorage.getItem('digger_best') || '0', 10) || 0; } catch (e) {}
 
-function sizeBoard() {
-    const controlsH = document.getElementById('controls').offsetParent ? 160 : 40;
-    const byW = (window.innerWidth - 40) / COLS, byH = (window.innerHeight - controlsH - 80) / ROWS;
-    CELL = Math.max(24, Math.min(46, Math.floor(Math.min(byW, byH))));
-    container.style.setProperty('--cell', CELL + 'px');
+function sizeCells() {
+    const availH = window.innerHeight - 40 - (matchMedia('(hover: hover) and (pointer: fine)').matches ? 70 : 200) - 24;
+    const availW = window.innerWidth - 36;
+    CELL = Math.max(24, Math.min(44, Math.floor(Math.min(availH / ROWS, availW / COLS))));
+    document.documentElement.style.setProperty('--cell-size', CELL + 'px');
     updatePlayerDisplay();
 }
 
 function initGame(keepScore) {
     container.querySelectorAll('.cell').forEach(c => c.remove());
     grid = []; crystalsLeft = 0; playerPos = { x: 4, y: 0 };
-    if (!keepScore) { score = 0; lives = 3; scoreEl.textContent = 0; livesEl.textContent = 3; }
     for (let y = 0; y < ROWS; y++) {
         grid[y] = [];
         for (let x = 0; x < COLS; x++) {
             const cell = document.createElement('div');
+            cell.className = 'cell';
             let type = 'dirt';
             if (y === 0 && x === 4) type = 'empty';
             else if (Math.random() < .15 && y > 1) type = 'rock';
             else if (Math.random() < .10 && y > 1) { type = 'crystal'; crystalsLeft++; }
-            cell.className = 'cell ' + type;
-            container.insertBefore(cell, player);
+            cell.classList.add(type);
+            container.insertBefore(cell, $('player'));
             grid[y][x] = { el: cell, type };
         }
     }
     if (crystalsLeft === 0) { grid[5][5].type = 'crystal'; grid[5][5].el.className = 'cell crystal'; crystalsLeft = 1; }
+    if (!keepScore) { score = 0; lives = 3; scoreEl.textContent = '0'; livesEl.textContent = '3'; }
     updatePlayerDisplay();
 }
 
-function updatePlayerDisplay() { player.style.left = (playerPos.x * CELL) + 'px'; player.style.top = (playerPos.y * CELL) + 'px'; }
+function updatePlayerDisplay() {
+    const p = $('player');
+    p.style.left = (playerPos.x * CELL) + 'px';
+    p.style.top = (playerPos.y * CELL) + 'px';
+}
 
 function movePlayer(dir) {
     if (!gameActive) return;
     let nx = playerPos.x, ny = playerPos.y;
     if (dir === 'up') ny--; if (dir === 'down') ny++; if (dir === 'left') nx--; if (dir === 'right') nx++;
     if (nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS) return;
-    const target = grid[ny][nx];
-    if (target.type === 'rock') return;
+    if (grid[ny][nx].type === 'rock') return;
     playerPos.x = nx; playerPos.y = ny;
-    if (target.type === 'dirt' || target.type === 'crystal') {
-        if (target.type === 'crystal') { score += 50; crystalsLeft--; scoreEl.textContent = score; }
-        target.type = 'empty'; target.el.className = 'cell empty';
+    const cur = grid[ny][nx];
+    if (cur.type === 'dirt' || cur.type === 'crystal') {
+        if (cur.type === 'crystal') { score += 50; crystalsLeft--; scoreEl.textContent = score; }
+        cur.type = 'empty'; cur.el.className = 'cell empty';
         checkVictory();
     }
     updatePlayerDisplay();
 }
 
-window.addEventListener('keydown', (e) => {
-    const m = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', w: 'up', s: 'down', a: 'left', d: 'right' };
-    if (m[e.key]) { e.preventDefault(); movePlayer(m[e.key]); }
-});
-
-/* butoane: apăsare lungă = mișcare continuă */
-let holdTimer = null;
-function bindHold(id, dir) {
-    const b = document.getElementById(id);
-    const stop = () => { clearInterval(holdTimer); holdTimer = null; b.classList.remove('on'); };
-    b.addEventListener('pointerdown', (e) => { e.preventDefault(); b.classList.add('on'); movePlayer(dir); clearInterval(holdTimer); holdTimer = setInterval(() => movePlayer(dir), 150); });
-    ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, stop));
-}
-bindHold('btn-up', 'up'); bindHold('btn-down', 'down'); bindHold('btn-left', 'left'); bindHold('btn-right', 'right');
-
-/* swipe pe tablă */
-let tx = 0, ty = 0;
-container.addEventListener('pointerdown', (e) => { tx = e.clientX; ty = e.clientY; });
-container.addEventListener('pointerup', (e) => {
-    const dx = e.clientX - tx, dy = e.clientY - ty;
-    if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
-    if (Math.abs(dx) > Math.abs(dy)) movePlayer(dx > 0 ? 'right' : 'left'); else movePlayer(dy > 0 ? 'down' : 'up');
-});
-
 function checkVictory() {
     if (crystalsLeft > 0) return;
     gameActive = false; score += 200; scoreEl.textContent = score;
-    document.getElementById('victory').hidden = false;
-    setTimeout(() => { document.getElementById('victory').hidden = true; gameActive = true; initGame(true); }, 2000);
+    bravo.style.display = 'flex';
+    setTimeout(() => { bravo.style.display = 'none'; initGame(true); gameActive = true; }, 1800);
 }
 
+/* pietrele cad */
 setInterval(() => {
     if (!gameActive) return;
-    for (let y = ROWS - 1; y >= 0; y--) for (let x = 0; x < COLS; x++) {
-        if (grid[y][x].type !== 'rock') continue;
-        const by = y + 1;
-        if (by < ROWS && grid[by][x].type === 'empty') {
-            if (playerPos.x === x && playerPos.y === by) hitPlayer();
+    for (let y = ROWS - 2; y >= 0; y--) for (let x = 0; x < COLS; x++) {
+        if (grid[y][x].type === 'rock' && grid[y + 1][x].type === 'empty') {
+            if (playerPos.x === x && playerPos.y === y + 1) hitPlayer();
             grid[y][x].type = 'empty'; grid[y][x].el.className = 'cell empty';
-            grid[by][x].type = 'rock'; grid[by][x].el.className = 'cell rock';
+            grid[y + 1][x].type = 'rock'; grid[y + 1][x].el.className = 'cell rock';
         }
     }
 }, 400);
 
 function hitPlayer() {
-    lives--; livesEl.textContent = Math.max(lives, 0);
-    container.classList.remove('flash'); void container.offsetWidth; container.classList.add('flash');
+    if (invulnerable) return;
+    lives--; livesEl.textContent = lives;
+    container.classList.add('hurt'); setTimeout(() => container.classList.remove('hurt'), 350);
+    invulnerable = true; setTimeout(() => invulnerable = false, 700);
     if (lives <= 0) {
         gameActive = false;
         if (score > best) { best = score; try { localStorage.setItem('digger_best', best); } catch (e) {} }
-        document.getElementById('final-score').textContent = score;
-        document.getElementById('ovBest').textContent = '🏆 Cel mai bun scor: ' + best;
-        document.getElementById('game-over').hidden = false;
+        $('ovEmoji').textContent = score >= 300 ? '🌟' : '⛏️';
+        $('ovTitle').textContent = 'Ai strâns ' + score + ' puncte!';
+        $('ovText').textContent = 'Încearcă din nou și adună și mai multe diamante.';
+        $('ovBest').textContent = '🏆 Cel mai bun scor: ' + best;
+        $('startBtn').textContent = 'Încă o dată';
+        overlay.hidden = false;
     }
 }
 
-document.getElementById('again').addEventListener('click', () => { document.getElementById('game-over').hidden = true; gameActive = true; initGame(false); });
-window.addEventListener('resize', sizeBoard);
-window.addEventListener('orientationchange', () => setTimeout(sizeBoard, 200));
-initGame(false); sizeBoard();
+$('startBtn').addEventListener('click', () => { initGame(false); overlay.hidden = true; gameActive = true; });
+
+/* tastatură */
+const keyMap = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', w: 'up', s: 'down', a: 'left', d: 'right' };
+window.addEventListener('keydown', (e) => { const d = keyMap[e.key]; if (d) { e.preventDefault(); movePlayer(d); } });
+
+/* butoane: apăsare lungă = mișcare repetată */
+function bindHold(id, dir) {
+    const b = $(id); let t = null;
+    const stop = () => { clearInterval(t); t = null; };
+    b.addEventListener('pointerdown', (e) => { e.preventDefault(); movePlayer(dir); stop(); t = setInterval(() => movePlayer(dir), 160); });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, stop));
+}
+bindHold('dp-up', 'up'); bindHold('dp-down', 'down'); bindHold('dp-left', 'left'); bindHold('dp-right', 'right');
+
+/* swipe pe teren */
+let sx = 0, sy = 0;
+container.addEventListener('pointerdown', (e) => { sx = e.clientX; sy = e.clientY; });
+container.addEventListener('pointerup', (e) => {
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+    if (Math.abs(dx) > Math.abs(dy)) movePlayer(dx > 0 ? 'right' : 'left'); else movePlayer(dy > 0 ? 'down' : 'up');
+});
+
+window.addEventListener('resize', sizeCells);
+window.addEventListener('orientationchange', () => setTimeout(sizeCells, 200));
+$('ovBest').textContent = best ? '🏆 Cel mai bun scor: ' + best : '';
+sizeCells(); initGame(false);
 </script>
 <script src="joc.js"></script>
 </body>

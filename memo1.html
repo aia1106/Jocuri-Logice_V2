@@ -6,11 +6,11 @@
     <title>Grădina cu Adunări - Clasa I</title>
     <style>
         :root {
-            --green-bg: #e8f5e9;
-            --card-back: #ff9f43;
+            --green-bg: #e8f5f2;
+            --card-back: #ea7f58;
             --card-front: #ffffff;
             --text-color: #2d3436;
-            --match-color: #2ecc71;
+            --match-color: #2eccac;
         }
 
         body {
@@ -24,7 +24,7 @@
             margin: 0;
         }
 
-        h1 { color: #2c3e50; font-size: 2.2rem; margin-bottom: 5px; text-align: center; }
+        h1 { color: #40225a; font-size: 2.2rem; margin-bottom: 5px; text-align: center; }
         
         .grid {
             display: grid;
@@ -65,7 +65,7 @@
 
         .card-back {
             background-color: var(--card-back);
-            box-shadow: 0 6px 0 #e67e22;
+            box-shadow: 0 6px 0 #e45724;
         }
 
         .card-front {
@@ -78,7 +78,7 @@
         .card.matched .card-front {
             background-color: var(--match-color);
             color: white;
-            border-color: #27ae60;
+            border-color: #27ae93;
             box-shadow: none;
         }
 
@@ -94,18 +94,26 @@
         }
 
         button {
-            background: #2ecc71; color: white; border: none;
+            background: #2eccac; color: white; border: none;
             padding: 15px 30px; font-size: 1.3rem; border-radius: 50px;
-            cursor: pointer; box-shadow: 0 4px 0 #27ae60;
+            cursor: pointer; box-shadow: 0 4px 0 #27ae93;
         }
     </style>
 <meta name="joc-inapoi" content="clasa0.html">
 <link rel="stylesheet" href="joc.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<style id="retheme">
+    body { font-family: "Nunito", "Segoe UI", system-ui, sans-serif !important; }
+    h1, h2, h3, button, .btn { font-family: "Fredoka", "Trebuchet MS", "Segoe UI", sans-serif; }
+    button { -webkit-tap-highlight-color: transparent; }
+</style>
 </head>
 <body>
 
     <h1>🍎 Grădina Numerelor 🍎</h1>
-    <p style="color: #666;">Găsește perechile corecte!</p>
+    <p style="color: #666666;">Găsește perechile corecte!</p>
 
     <div class="grid" id="game-grid"></div>
 

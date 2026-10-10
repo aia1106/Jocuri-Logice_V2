@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Adunări Distractive – Jocuri Logice</title>
+<link rel="icon" href="LOGO.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="stil.css">
+<meta charset="UTF-8">
+  
+  
+  
+  <style>
+    body {
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      background-color: #f8f4fb;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      padding: 10px 0;
+    }
+
+    .exercise-section {
+      margin: 40px auto;
+      padding: 20px;
+      max-width: 100%;
+    }
+
+    .exercise-box {
+      display: inline-block;
+      background-color: #f5dfd7;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    h1 {
+      font-size: 2.5em;
+      color: white;
+    }
+
+    .exercise {
+      font-size: 2em;
+      margin-bottom: 20px;
+      color: #8145b5;
+    }
+
+    #answer {
+      font-size: 1.5em;
+      padding: 10px;
+      border-radius: 5px;
+      border: 2px solid #8145b5;
+      margin-bottom: 10px;
+      width: 150px;
+    }
+
+    button {
+      font-size: 1.2em;
+      padding: 10px 20px;
+      color: white;
+      background-color: #32cdae;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #228b76;
+    }
+
+    .feedback {
+      font-size: 1.5em;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    .error {
+      color: #e3511c;
+    }
+
+    .success {
+      color: #32cdae;
+    }
+
+    .celebrate {
+      font-size: 2em;
+      color: #e52e65;
+    }
+  </style>
+<style id="retheme">
+    body { font-family: "Nunito", "Segoe UI", system-ui, sans-serif !important; }
+    h1, h2, h3, button, .btn { font-family: "Fredoka", "Trebuchet MS", "Segoe UI", sans-serif; }
+    button { -webkit-tap-highlight-color: transparent; }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#continut">Sari la conținut</a>
+<header class="site-header">
+    <div class="header-top">
+        <a class="brand" href="index.html" aria-label="Jocuri Logice – pagina principală">
+            <img src="logo-palat.png" alt="" class="header-logo" width="113" height="38">
+            <span class="brand-text"><span class="site-name">Jocuri Logice</span></span>
+        </a>
+        <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="meniu"><span class="menu-icon" aria-hidden="true">☰</span><span>Meniu</span></button>
+    </div>
+    <nav aria-label="Navigare principală"><ul class="menu" id="meniu"><li><a href="index.html">Acasă</a></li><li><a href="clasa0.html">Clasa 0</a></li><li><a href="clasa1.html">Clasa I</a></li><li><a href="clasa2.html">Clasa a II-a</a></li><li><a href="clasa3.html">Clasa a III-a</a></li><li><a href="clasa4.html">Clasa a IV-a</a></li><li><a href="jocuri.html">Jocuri</a></li><li><a href="concurs.html">Concurs</a></li><li><a href="info.html">Informații</a></li><li><a href="resursedidactice.html">Resurse</a></li><li><a href="contact.html">Contact</a></li></ul></nav>
+</header>
+<main id="continut" class="legacy">
+<main class="exercise-section">
+    <div class="exercise-box">
+      <h1>Adunări Distractive!</h1>
+      <div id="exercise" class="exercise"></div>
+      <input type="number" id="answer" placeholder="Introdu răspunsul aici" />
+      <br>
+      <button onclick="checkAnswer()">Verifică</button>
+      <div id="feedback" class="feedback"></div>
+    </div>
+  </main>
+
+  
+
+  <script>
+    let currentExercise = 0;
+    let num1, num2, correctAnswer;
+
+    function generateExercise() {
+      num1 = Math.floor(Math.random() * 50) + 1;
+      num2 = Math.floor(Math.random() * 50) + 1;
+      correctAnswer = num1 + num2;
+      document.getElementById('exercise').textContent = `${num1} + ${num2} = ?`;
+      document.getElementById('answer').value = '';
+      document.getElementById('feedback').textContent = '';
+      document.getElementById('feedback').classList.remove('error', 'success', 'celebrate');
+    }
+
+    function checkAnswer() {
+      const userAnswer = parseInt(document.getElementById('answer').value, 10);
+      const feedback = document.getElementById('feedback');
+
+      if (userAnswer === correctAnswer) {
+        feedback.textContent = 'Corect! Continuă așa!';
+        feedback.classList.add('success');
+        currentExercise++;
+        if (currentExercise < 10) {
+          setTimeout(generateExercise, 1000);
+        } else {
+          feedback.textContent = 'Felicitări! Ai terminat cele 10 exerciții! 🎉';
+          feedback.classList.add('celebrate');
+          document.getElementById('exercise').textContent = '';
+          document.getElementById('answer').style.display = 'none';
+          document.querySelector('button').style.display = 'none';
+        }
+      } else {
+        feedback.textContent = 'Răspuns greșit. Încearcă din nou!';
+        feedback.classList.add('error');
+      }
+    }
+
+    generateExercise();
+  </script>
+</main>
+<footer class="site-footer">
+    <img src="LOGO.png" alt="Sigla Cercului de Jocuri Logice" class="footer-logo" width="56" height="56" loading="lazy">
+    <p>&copy; 2025 Cercul de Jocuri Logice – Palatul Copiilor Arad</p>
+</footer>
+<script src="meniu.js"></script>
+</body>
+</html>

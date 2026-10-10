@@ -6,11 +6,11 @@
     <title>Mate Clasa a III-a - Ordinea Operațiilor</title>
     <style>
         :root {
-            --primary: #2ecc71;
-            --secondary: #3498db;
-            --success: #27ae60;
-            --error: #e74c3c;
-            --bg: #f0f4f8;
+            --primary: #2eccac;
+            --secondary: #8d34db;
+            --success: #27ae93;
+            --error: #e73c6f;
+            --bg: #f4f0f8;
         }
 
         body {
@@ -32,13 +32,13 @@
             border-top: 10px solid var(--secondary);
         }
 
-        h1 { text-align: center; color: #2c3e50; margin-bottom: 10px; }
+        h1 { text-align: center; color: #40225a; margin-bottom: 10px; }
         p.desc { text-align: center; color: #7f8c8d; margin-bottom: 25px; }
 
         .progress-container {
             width: 100%;
             height: 15px;
-            background: #dfe6e9;
+            background: #e4dfe9;
             border-radius: 10px;
             margin-bottom: 30px;
             overflow: hidden;
@@ -59,21 +59,21 @@
             margin-bottom: 15px;
             padding: 15px;
             border-radius: 12px;
-            border: 1px solid #edf2f7;
+            border: 1px solid #f2edf7;
             font-size: 1.2rem;
             transition: transform 0.2s;
         }
 
         .exercitiu:hover { transform: scale(1.02); }
 
-        .text-operatie { font-weight: 600; color: #34495e; }
+        .text-operatie { font-weight: 600; color: #4b286a; }
 
         input {
             width: 80px;
             height: 45px;
             text-align: center;
             font-size: 1.2rem;
-            border: 2px solid #cbd5e0;
+            border: 2px solid #d6cbe0;
             border-radius: 8px;
             outline: none;
             transition: all 0.3s;
@@ -81,15 +81,15 @@
 
         input.corect {
             border-color: var(--success);
-            background-color: #d4edda;
-            color: #155724;
+            background-color: #d4ede8;
+            color: #15574a;
             pointer-events: none;
         }
 
         input.gresit {
             border-color: var(--error);
-            background-color: #f8d7da;
-            color: #721c24;
+            background-color: #f6d9e2;
+            color: #721c36;
             animation: shake 0.3s;
         }
 
@@ -112,8 +112,8 @@
             display: none;
             text-align: center;
             padding: 20px;
-            background: #d4edda;
-            color: #155724;
+            background: #d4ede8;
+            color: #15574a;
             border-radius: 10px;
             margin-top: 20px;
             font-weight: bold;
@@ -121,6 +121,14 @@
     </style>
 <meta name="joc-inapoi" content="clasa3.html">
 <link rel="stylesheet" href="joc.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<style id="retheme">
+    body { font-family: "Nunito", "Segoe UI", system-ui, sans-serif !important; }
+    h1, h2, h3, button, .btn { font-family: "Fredoka", "Trebuchet MS", "Segoe UI", sans-serif; }
+    button { -webkit-tap-highlight-color: transparent; }
+</style>
 </head>
 <body>
 
